@@ -1,3 +1,16 @@
+# requirements
+
+## possibl display
+
+- maybe at least 2 rows?
+
+```
+ port0 ---󱐋--> device1
+```
+
+- things to show for power
+  - standard (1.5A, 3A, PD), PD version
+
 # alternatives
 
 - Cyme (but more for other USB devices) https://github.com/tuna-f1sh/cyme?tab=readme-ov-file
