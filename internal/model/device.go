@@ -6,7 +6,7 @@ type Port struct {
 	Name               string
 	DataRole           string
 	PowerRole          string
-	PowerOperationMode string
+	PowerOperationMode string // "default", "1.5A", "3.0A", or "usb_power_delivery"
 	Partner            *Partner
 }
 

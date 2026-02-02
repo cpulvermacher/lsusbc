@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/christian/usb-c/internal/model"
 )
@@ -26,7 +25,7 @@ func RenderPorts(ports []model.Port) {
 // renderConnection renders a port-partner connection
 func renderConnection(port model.Port) {
 	deviceName := GetFriendlyDeviceName(port.Partner)
-	capabilities := formatCapabilities(port.Partner)
+	capabilities := formatCapabilities(port.Partner, port.PowerOperationMode)
 
 	// Arrow direction based on power flow
 	// If port is sink, it receives power (arrow points toward port)
@@ -67,37 +66,23 @@ func GetFriendlyDeviceName(partner *model.Partner) string {
 	return "USB Device"
 }
 
-// formatCapabilities formats power capabilities into a condensed string
-func formatCapabilities(partner *model.Partner) string {
-	var parts []string
-
-	// Extract unique current values
-	currentMap := make(map[string]bool)
-	for _, cap := range partner.SourceCapabilities {
-		currentMap[cap.FormatCurrent()] = true
-	}
-	for _, cap := range partner.SinkCapabilities {
-		currentMap[cap.FormatCurrent()] = true
-	}
-
-	// Convert map to sorted list
-	var currents []string
-	for current := range currentMap {
-		currents = append(currents, current)
-	}
-
-	if len(currents) > 0 {
-		parts = append(parts, currents...)
-	}
-
-	// Add PD version if available
-	if partner.PDRevision != "" && partner.PDRevision != "0.0" {
-		parts = append(parts, "PD "+partner.PDRevision)
-	}
-
-	if len(parts) == 0 {
+// formatCapabilities formats power capabilities based on power operation mode
+func formatCapabilities(partner *model.Partner, powerOperationMode string) string {
+	// Use power_operation_mode to decide what to show
+	switch powerOperationMode {
+	case "default":
+		return "[USB]"
+	case "1.5A":
+		return "[1.5A]"
+	case "3.0A":
+		return "[3A]"
+	case "usb_power_delivery":
+		// Show PD version only
+		if partner.PDRevision != "" && partner.PDRevision != "0.0" {
+			return "[PD " + partner.PDRevision + "]"
+		}
+		return "[PD]"
+	default:
 		return ""
 	}
-
-	return "[" + strings.Join(parts, ", ") + "]"
 }
