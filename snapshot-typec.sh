@@ -22,7 +22,12 @@ fi
 mkdir -p "$DEST_DIR"
 DEST_DIR=$(cd "$DEST_DIR" && pwd)
 
+SYMLINKS_FILE="$DEST_DIR/symlinks.txt"
+
 echo "Snapshotting $SOURCE_DIR to $DEST_DIR..."
+echo "# Symlinks found in /sys/class/typec" > "$SYMLINKS_FILE"
+echo "# Format: path -> target" >> "$SYMLINKS_FILE"
+echo "" >> "$SYMLINKS_FILE"
 
 # Function to copy a file's content
 copy_file() {
@@ -61,7 +66,7 @@ for entry in "$SOURCE_DIR"/*; do
 
         # Save symlink info
         symlink_target=$(readlink "$entry")
-        echo "$symlink_target" > "$DEST_DIR/$entry_name.symlink"
+        echo "$entry_name -> $symlink_target" >> "$SYMLINKS_FILE"
     else
         real_path="$entry"
     fi
@@ -95,20 +100,18 @@ for entry in "$SOURCE_DIR"/*; do
         fi
     done
 
-    # Save directory structure info (non-recursive symlinks within this device)
+    # Save directory structure info (symlinks within this device)
     find "$real_path" -type l 2>/dev/null | while IFS= read -r link; do
-        # Check if link target is still within typec
         link_target=$(readlink "$link" 2>/dev/null || echo "")
 
         if [ -n "$link_target" ]; then
             rel_to_device="${link#$real_path/}"
-            mkdir -p "$DEST_DIR/$entry_name/$(dirname "$rel_to_device")"
-            echo "$link_target" > "$DEST_DIR/$entry_name/$rel_to_device.symlink"
+            echo "$entry_name/$rel_to_device -> $link_target" >> "$SYMLINKS_FILE"
         fi
     done
 done
 
 echo ""
 echo "Snapshot complete: $DEST_DIR"
-echo "Total files copied: $(find "$DEST_DIR" -type f -not -name "*.symlink" | wc -l)"
-echo "Total symlinks saved: $(find "$DEST_DIR" -type f -name "*.symlink" | wc -l)"
+echo "Total files copied: $(find "$DEST_DIR" -type f -not -name "symlinks.txt" | wc -l)"
+echo "Symlinks info saved to: $SYMLINKS_FILE"
