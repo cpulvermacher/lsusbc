@@ -28,7 +28,17 @@ func renderConnection(port model.Port) {
 	deviceName := GetFriendlyDeviceName(port.Partner)
 	capabilities := formatCapabilities(port.Partner)
 
-	fmt.Printf("%s ---󱐋--> %s  %s\n", port.Name, deviceName, capabilities)
+	// Arrow direction based on power flow
+	// If port is sink, it receives power (arrow points toward port)
+	// If port is source, it provides power (arrow points toward device)
+	var arrow string
+	if port.PowerRole == "sink" {
+		arrow = "<--󱐋---"
+	} else {
+		arrow = "---󱐋-->"
+	}
+
+	fmt.Printf("%s %s %s  %s\n", port.Name, arrow, deviceName, capabilities)
 }
 
 // GetFriendlyDeviceName generates a friendly device description

@@ -1,15 +1,52 @@
-# requirements
+# USB-C TUI Utility
 
-## possibl display
+A Go-based text user interface utility to display USB-C device information from Linux's typec sysfs interface.
 
-- maybe at least 2 rows?
+## Features
+
+- Display connected USB-C devices with visual representation
+- Show power delivery information (current, PD version)
+- Directional arrows indicating power flow
+- Detect device types (DisplayPort, chargers, phones, etc.)
+- Works with live system or saved snapshots
+
+## Usage
+
+View current USB-C ports:
+```bash
+./usb-c
+```
+
+View from a snapshot directory:
+```bash
+./usb-c snapshots/charger-mac
+```
+
+## Building
+
+```bash
+go build -o usb-c .
+```
+
+## Example Output
 
 ```
- port0 ---󱐋--> device1
+port0 <--󱐋--- Charger  [3A, 3.4A, PD 2.0]
+port0 ---󱐋--> DisplayPort Device  [PD 2.0]
+port0 ---󱐋--> Phone/Device  [1.5A]
+port0 (no device connected)
 ```
 
-- things to show for power
-  - standard (1.5A, 3A, PD), PD version
+Arrow direction indicates power flow:
+- `---󱐋--->` Port provides power to device
+- `<--󱐋---` Port receives power from device
+
+## Snapshot Tool
+
+Use `snapshot-typec.sh` to save USB-C state for later analysis:
+```bash
+./snapshot-typec.sh snapshots/my-device
+```
 
 # alternatives
 

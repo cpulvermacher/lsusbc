@@ -10,17 +10,25 @@ import (
 	"github.com/christian/usb-c/internal/model"
 )
 
-// LoadSnapshot loads all ports from a snapshot directory
-func LoadSnapshot(path string) ([]model.Port, error) {
+// LoadPorts loads all ports from a typec directory (live system or snapshot)
+func LoadPorts(path string) ([]model.Port, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read snapshot directory: %w", err)
+		return nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
 	var ports []model.Port
 	for _, entry := range entries {
-		if entry.IsDir() && strings.HasPrefix(entry.Name(), "port") && !strings.Contains(entry.Name(), "-") {
+		// Check if it's a port directory/symlink (port0, port1, etc. but not port0-partner)
+		if strings.HasPrefix(entry.Name(), "port") && !strings.Contains(entry.Name(), "-") {
 			portPath := filepath.Join(path, entry.Name())
+
+			// Verify it's a directory (follow symlinks)
+			info, err := os.Stat(portPath)
+			if err != nil || !info.IsDir() {
+				continue
+			}
+
 			port, err := parsePort(portPath)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to parse port %s: %v\n", entry.Name(), err)
@@ -70,7 +78,7 @@ func parsePartner(partnerDir string, dataRole, powerRole string) (*model.Partner
 	partner.AccessoryMode = strings.TrimSpace(readFile(filepath.Join(partnerDir, "accessory_mode")))
 
 	// Parse alternate mode
-	altModeDir := partnerDir + ".0"
+	altModeDir := filepath.Join(partnerDir, filepath.Base(partnerDir)+".0")
 	if _, err := os.Stat(altModeDir); err == nil {
 		description := strings.TrimSpace(readFile(filepath.Join(altModeDir, "description")))
 		if description != "" {

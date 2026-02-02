@@ -9,25 +9,22 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <snapshot-directory>\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nExample:\n")
-		fmt.Fprintf(os.Stderr, "  %s snapshots/charger-mac\n", os.Args[0])
-		os.Exit(1)
+	// Default to /sys/class/typec, allow override with argument
+	typecDir := "/sys/class/typec"
+	if len(os.Args) >= 2 {
+		typecDir = os.Args[1]
 	}
-
-	snapshotDir := os.Args[1]
 
 	// Check if directory exists
-	if _, err := os.Stat(snapshotDir); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Error: snapshot directory does not exist: %s\n", snapshotDir)
+	if _, err := os.Stat(typecDir); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Error: directory does not exist: %s\n", typecDir)
 		os.Exit(1)
 	}
 
-	// Load snapshot
-	ports, err := parser.LoadSnapshot(snapshotDir)
+	// Load ports
+	ports, err := parser.LoadPorts(typecDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading snapshot: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
 		os.Exit(1)
 	}
 
