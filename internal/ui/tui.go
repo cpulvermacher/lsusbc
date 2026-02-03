@@ -22,13 +22,23 @@ var (
 	powerMode3000mA = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
 	powerMode1500mA = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
 	powerModeUsb    = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
+
+	popupStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#8e8e8e")).
+			Padding(1, 2).
+			MarginLeft(10).
+			Width(70)
+
+	helpText = lipgloss.NewStyle().Foreground(lipgloss.Color("#6e6e6e"))
 )
 
 type UIModel struct {
 	TypecDir string
 
-	ports        []model.Port
-	selectedPort int
+	ports          []model.Port
+	selectedPort   int
+	showingDetails bool
 }
 
 type RefreshTick time.Time
@@ -51,13 +61,22 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case " ":
+			m.showingDetails = !m.showingDetails
+			return m, nil
 		case "r":
 			return refresh(m), nil
 		case "j", "down":
 			return moveSelection(m, +1), nil
 		case "k", "up":
 			return moveSelection(m, -1), nil
-		case "ctrl+c", "q":
+		case "q":
+			if m.showingDetails {
+				m.showingDetails = false
+				return m, nil
+			}
+			return m, tea.Quit
+		case "ctrl+c":
 			return m, tea.Quit
 		}
 
@@ -96,6 +115,11 @@ func (m UIModel) View() string {
 			lines += renderConnection(port)
 		}
 	}
+
+	if m.showingDetails && len(m.ports) > 0 {
+		return renderPopupOverlay(lines, m.ports[m.selectedPort])
+	}
+
 	return lines
 }
 
@@ -226,4 +250,90 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 	default:
 		return ""
 	}
+}
+
+// renderPortDetails formats all Port model fields for display
+func renderPortDetails(port model.Port) string {
+	var content string
+
+	// Port basic info
+	content += fmt.Sprintf("Port: %s\n", port.Name)
+	content += fmt.Sprintf("Data Role: %s\n", port.DataRole)
+	content += fmt.Sprintf("Power Role: %s\n", port.PowerRole)
+	content += fmt.Sprintf("Power Operation Mode: %s\n\n", port.PowerOperationMode)
+
+	// Partner info
+	if port.Partner == nil {
+		content += "Partner: (none)\n"
+	} else {
+		partner := port.Partner
+		content += fmt.Sprintf("Partner: %s\n", partner.Name)
+		content += fmt.Sprintf("  Data Role: %s\n", partner.DataRole)
+		content += fmt.Sprintf("  Power Role: %s\n", partner.PowerRole)
+		content += fmt.Sprintf("  PD Revision: %s\n", partner.PDRevision)
+		content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
+
+		// Source capabilities
+		if len(partner.SourceCapabilities) > 0 {
+			content += "  Source Capabilities:\n"
+			for i, cap := range partner.SourceCapabilities {
+				content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
+			}
+			content += "\n"
+		}
+
+		// Sink capabilities
+		if len(partner.SinkCapabilities) > 0 {
+			content += "  Sink Capabilities:\n"
+			for i, cap := range partner.SinkCapabilities {
+				content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
+			}
+			content += "\n"
+		}
+
+		// Alternate modes
+		if len(partner.AlternateModes) > 0 {
+			content += "  Alternate Modes:\n"
+			for _, mode := range partner.AlternateModes {
+				content += fmt.Sprintf("    [%d] %s\n", mode.Index, mode.Description)
+			}
+			content += "\n"
+		}
+
+		// USB devices
+		if len(partner.USBDevices) > 0 {
+			content += "  USB Devices:\n"
+			for _, device := range partner.USBDevices {
+				content += fmt.Sprintf("    %s\n", device.DeviceID)
+				if device.Manufacturer != "" {
+					content += fmt.Sprintf("      Manufacturer: %s\n", device.Manufacturer)
+				}
+				if device.Product != "" {
+					content += fmt.Sprintf("      Product: %s\n", device.Product)
+				}
+				if device.Serial != "" {
+					content += fmt.Sprintf("      Serial: %s\n", device.Serial)
+				}
+				if device.IDVendor != "" {
+					content += fmt.Sprintf("      Vendor ID: %s\n", device.IDVendor)
+				}
+				if device.IDProduct != "" {
+					content += fmt.Sprintf("      Product ID: %s\n", device.IDProduct)
+				}
+			}
+		}
+	}
+
+	return content
+}
+
+// renderPopupOverlay renders the port details as a popup overlay
+func renderPopupOverlay(background string, port model.Port) string {
+	details := renderPortDetails(port)
+
+	instruction := helpText.Render("\nPress Space or q to close")
+
+	popup := popupStyle.Render(details + instruction)
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, background, popup)
 }
