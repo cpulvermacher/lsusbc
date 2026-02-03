@@ -77,14 +77,8 @@ func parsePartner(partnerDir string, dataRole, powerRole string) (*model.Partner
 	// Parse basic partner info
 	partner.AccessoryMode = strings.TrimSpace(readFile(filepath.Join(partnerDir, "accessory_mode")))
 
-	// Parse alternate mode
-	altModeDir := filepath.Join(partnerDir, filepath.Base(partnerDir)+".0")
-	if _, err := os.Stat(altModeDir); err == nil {
-		description := strings.TrimSpace(readFile(filepath.Join(altModeDir, "description")))
-		if description != "" {
-			partner.AlternateMode = description
-		}
-	}
+	// Parse all alternate modes
+	partner.AlternateModes = parseAlternateModes(partnerDir)
 
 	// Parse PD information
 	pd1Dir := filepath.Join(partnerDir, "pd1")
@@ -108,6 +102,46 @@ func parsePartner(partnerDir string, dataRole, powerRole string) (*model.Partner
 	parseUSBDeviceInfo(partner, partnerDir)
 
 	return partner, nil
+}
+
+// parseAlternateModes scans for and parses all alternate mode directories
+func parseAlternateModes(partnerDir string) []model.AlternateMode {
+	partnerName := filepath.Base(partnerDir)
+	var alternateModes []model.AlternateMode
+
+	// Scan directory for alternate mode entries (port0-partner.0, port0-partner.1, etc.)
+	entries, err := os.ReadDir(partnerDir)
+	if err != nil {
+		return alternateModes
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+
+		// Check if it matches the pattern: <partner-name>.<digit>
+		prefix := partnerName + "."
+		if strings.HasPrefix(name, prefix) && entry.IsDir() {
+			// Extract the index
+			indexStr := strings.TrimPrefix(name, prefix)
+			index, err := strconv.Atoi(indexStr)
+			if err != nil {
+				continue
+			}
+
+			// Parse the alternate mode description
+			altModePath := filepath.Join(partnerDir, name)
+			description := strings.TrimSpace(readFile(filepath.Join(altModePath, "description")))
+
+			if description != "" {
+				alternateModes = append(alternateModes, model.AlternateMode{
+					Index:       index,
+					Description: description,
+				})
+			}
+		}
+	}
+
+	return alternateModes
 }
 
 // parseCapabilities parses PD capabilities from a directory

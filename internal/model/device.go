@@ -15,12 +15,17 @@ type Partner struct {
 	PDRevision         string
 	SourceCapabilities []PowerCapability
 	SinkCapabilities   []PowerCapability
-	AlternateMode      string
+	AlternateModes     []AlternateMode
 	AccessoryMode      string
 	DataRole           string
 	PowerRole          string
 	// USB devices connected through this partner (from symlinks in partner directory)
 	USBDevices         []USBDevice
+}
+
+type AlternateMode struct {
+	Index       int    // The index (0, 1, 2, etc.)
+	Description string // Description from the alternate mode
 }
 
 type USBDevice struct {

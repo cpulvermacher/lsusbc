@@ -132,9 +132,21 @@ func formatUSBDevice(device model.USBDevice) string {
 
 // getFriendlyDeviceName generates a friendly device description when USB device info is not available
 func getFriendlyDeviceName(partner *model.Partner) string {
-	// Priority 1: Alternate mode description
-	if partner.AlternateMode != "" {
-		return partner.AlternateMode + " Device"
+	// Priority 1: Alternate mode description(s)
+	if len(partner.AlternateModes) > 0 {
+		// If there's only one alternate mode, show it directly
+		if len(partner.AlternateModes) == 1 {
+			return partner.AlternateModes[0].Description + " Device"
+		}
+		// If multiple alternate modes, concatenate them
+		var modes string
+		for i, mode := range partner.AlternateModes {
+			if i > 0 {
+				modes += ", "
+			}
+			modes += mode.Description
+		}
+		return modes + " Device"
 	}
 
 	// Priority 2: Charger (device role + sink power role)
