@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/tree"
 
 	"github.com/christian/usb-c/internal/model"
 	"github.com/christian/usb-c/internal/parser"
@@ -113,17 +114,13 @@ func renderConnection(port model.Port) string {
 		return fmt.Sprintf("%s %s %s  %s\n", port.Name, arrow, deviceName, capabilities)
 	} else {
 		// Multiple USB devices - show as tree
-		var tree string
-		tree += fmt.Sprintf("%s %s %s\n", port.Name, arrow, capabilities)
-		for i, device := range port.Partner.USBDevices {
+		t := tree.New().Enumerator(tree.RoundedEnumerator)
+		for _, device := range port.Partner.USBDevices {
 			deviceName := formatUSBDevice(device)
-			if i == len(port.Partner.USBDevices)-1 {
-				tree += fmt.Sprintf("        └─ %s\n", deviceName)
-			} else {
-				tree += fmt.Sprintf("        ├─ %s\n", deviceName)
-			}
+			t.Child(deviceName)
 		}
-		return tree
+		indentedTree := lipgloss.NewStyle().PaddingLeft(12).Render(t.String())
+		return fmt.Sprintf("%s %s %s\n%s\n", port.Name, arrow, capabilities, indentedTree)
 	}
 }
 
