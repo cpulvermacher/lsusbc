@@ -111,6 +111,80 @@ for entry in "$SOURCE_DIR"/*; do
     done
 done
 
+# Capture USB device information
+echo ""
+echo "Scanning for USB devices..."
+
+USB_DEVICES_DIR="/sys/bus/usb/devices"
+USB_DEST_DIR="$DEST_DIR/usb/devices"
+
+# Find all USB device symlinks in partner directories
+usb_devices_to_copy=()
+
+for partner_dir in "$DEST_DIR"/port*-partner; do
+    [ -d "$partner_dir" ] || continue
+
+    partner_name=$(basename "$partner_dir")
+
+    # Find the real partner directory in /sys/class/typec
+    typec_partner_dir="$SOURCE_DIR/$partner_name"
+    if [ ! -d "$typec_partner_dir" ]; then
+        # Try nested structure (port0/port0-partner)
+        port_prefix="${partner_name%-partner}"
+        typec_partner_dir="$SOURCE_DIR/$port_prefix/$partner_name"
+    fi
+
+    [ -d "$typec_partner_dir" ] || continue
+
+    # Look for USB device symlinks (pattern: digits-digits, like "1-4" or "2-1.3")
+    for entry in "$typec_partner_dir"/*; do
+        [ -L "$entry" ] || continue
+
+        entry_name=$(basename "$entry")
+
+        # Check if it matches USB device pattern (starts with digit, contains dash, no colon)
+        if [[ "$entry_name" =~ ^[0-9]+-[0-9] ]] && [[ ! "$entry_name" =~ : ]]; then
+            # This is a USB device symlink
+            if [ -d "$USB_DEVICES_DIR/$entry_name" ]; then
+                echo "  Found USB device: $entry_name (in $partner_name)"
+                usb_devices_to_copy+=("$entry_name")
+
+                # Record the symlink in symlinks.txt
+                echo "$partner_name/$entry_name -> ../../usb/devices/$entry_name" >> "$SYMLINKS_FILE"
+
+                # Create a marker file in the snapshot partner directory
+                # This allows the Go code to find the device when scanning the directory
+                touch "$partner_dir/$entry_name"
+            fi
+        fi
+    done
+done
+
+# Copy USB device directories
+if [ ${#usb_devices_to_copy[@]} -gt 0 ]; then
+    echo ""
+    echo "Copying USB device information..."
+    mkdir -p "$USB_DEST_DIR"
+
+    for device_id in "${usb_devices_to_copy[@]}"; do
+        device_src="$USB_DEVICES_DIR/$device_id"
+        device_dst="$USB_DEST_DIR/$device_id"
+
+        [ -d "$device_src" ] || continue
+
+        mkdir -p "$device_dst"
+
+        # Copy key files from the USB device
+        for file in manufacturer product serial idVendor idProduct; do
+            if [ -f "$device_src/$file" ]; then
+                if copy_file "$device_src/$file" "$device_dst/$file"; then
+                    echo "  Copied: usb/devices/$device_id/$file"
+                fi
+            fi
+        done
+    done
+fi
+
 echo ""
 echo "Snapshot complete: $DEST_DIR"
 echo "Total files copied: $(find "$DEST_DIR" -type f -not -name "symlinks.txt" | wc -l)"

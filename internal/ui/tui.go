@@ -24,7 +24,6 @@ func RenderPorts(ports []model.Port) {
 
 // renderConnection renders a port-partner connection
 func renderConnection(port model.Port) {
-	deviceName := GetFriendlyDeviceName(port.Partner)
 	capabilities := formatCapabilities(port.Partner, port.PowerOperationMode)
 
 	// Arrow direction based on power flow
@@ -37,10 +36,45 @@ func renderConnection(port model.Port) {
 		arrow = "---󱐋-->"
 	}
 
-	fmt.Printf("%s %s %s  %s\n", port.Name, arrow, deviceName, capabilities)
+	// Handle single device vs multiple devices
+	if len(port.Partner.USBDevices) == 0 {
+		// No USB device info available - use generic name
+		deviceName := GetFriendlyDeviceName(port.Partner)
+		fmt.Printf("%s %s %s  %s\n", port.Name, arrow, deviceName, capabilities)
+	} else if len(port.Partner.USBDevices) == 1 {
+		// Single USB device - show on same line
+		device := port.Partner.USBDevices[0]
+		deviceName := formatUSBDevice(device)
+		fmt.Printf("%s %s %s  %s\n", port.Name, arrow, deviceName, capabilities)
+	} else {
+		// Multiple USB devices - show as tree
+		fmt.Printf("%s %s %s\n", port.Name, arrow, capabilities)
+		for i, device := range port.Partner.USBDevices {
+			deviceName := formatUSBDevice(device)
+			if i == len(port.Partner.USBDevices)-1 {
+				fmt.Printf("        └─ %s\n", deviceName)
+			} else {
+				fmt.Printf("        ├─ %s\n", deviceName)
+			}
+		}
+	}
 }
 
-// GetFriendlyDeviceName generates a friendly device description
+// formatUSBDevice formats a USB device name
+func formatUSBDevice(device model.USBDevice) string {
+	if device.Manufacturer != "" && device.Product != "" {
+		return device.Manufacturer + " " + device.Product
+	}
+	if device.Product != "" {
+		return device.Product
+	}
+	if device.Manufacturer != "" {
+		return device.Manufacturer + " Device"
+	}
+	return "USB Device"
+}
+
+// GetFriendlyDeviceName generates a friendly device description when USB device info is not available
 func GetFriendlyDeviceName(partner *model.Partner) string {
 	// Priority 1: Alternate mode description
 	if partner.AlternateMode != "" {

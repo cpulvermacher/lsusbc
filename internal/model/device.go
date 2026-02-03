@@ -19,6 +19,17 @@ type Partner struct {
 	AccessoryMode      string
 	DataRole           string
 	PowerRole          string
+	// USB devices connected through this partner (from symlinks in partner directory)
+	USBDevices         []USBDevice
+}
+
+type USBDevice struct {
+	DeviceID     string // e.g., "1-4", "2-1.3"
+	Manufacturer string
+	Product      string
+	Serial       string
+	IDVendor     string
+	IDProduct    string
 }
 
 type PowerCapability struct {
