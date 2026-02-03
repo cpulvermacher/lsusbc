@@ -25,7 +25,7 @@ var (
 
 type UIModel struct {
 	TypecDir string
-	Ports    []model.Port
+	ports    []model.Port
 }
 
 type RefreshTick time.Time
@@ -37,14 +37,15 @@ func doTick() tea.Cmd {
 }
 
 func (m UIModel) Init() tea.Cmd {
-	// Just return `nil`, which means "no I/O right now, please."
-	return doTick()
+	return nil
 }
 
 func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case RefreshTick:
+	if m.ports == nil {
 		return refresh(m), doTick()
+	}
+
+	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "r":
@@ -53,18 +54,24 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
+	case RefreshTick:
+		return refresh(m), doTick()
+
 	}
 
 	return m, nil
 }
 
 func (m UIModel) View() string {
-	if len(m.Ports) == 0 {
+	if m.ports == nil {
+		return "Loading..."
+	}
+	if len(m.ports) == 0 {
 		return "No USB-C ports found"
 	}
 
 	var lines string
-	for _, port := range m.Ports {
+	for _, port := range m.ports {
 		if port.Partner == nil {
 			lines += fmt.Sprintf("%s %s\n", port.Name, inactive.Render("(no device connected)"))
 		} else {
@@ -84,7 +91,7 @@ func refresh(m UIModel) UIModel {
 
 	return UIModel{
 		TypecDir: m.TypecDir,
-		Ports:    ports,
+		ports:    ports,
 	}
 }
 
