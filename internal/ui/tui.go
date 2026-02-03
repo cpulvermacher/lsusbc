@@ -6,9 +6,20 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/christian/usb-c/internal/model"
 	"github.com/christian/usb-c/internal/parser"
+)
+
+var (
+	inactive           = lipgloss.NewStyle().Foreground(lipgloss.Color("#4e4e4e"))
+	powerArrowCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#aad700"))
+
+	powerModePd     = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
+	powerMode3000mA = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
+	powerMode1500mA = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
+	powerModeUsb    = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
 )
 
 type UIModel struct {
@@ -48,13 +59,13 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m UIModel) View() string {
 	if len(m.Ports) == 0 {
-		return ("No USB-C ports found in snapshot")
+		return "No USB-C ports found"
 	}
 
 	var lines string
 	for _, port := range m.Ports {
 		if port.Partner == nil {
-			lines += fmt.Sprintf("%s (no device connected)\n", port.Name)
+			lines += fmt.Sprintf("%s %s\n", port.Name, inactive.Render("(no device connected)"))
 		} else {
 			lines += renderConnection(port)
 		}
@@ -85,9 +96,9 @@ func renderConnection(port model.Port) string {
 	// If port is source, it provides power (arrow points toward device)
 	var arrow string
 	if port.PowerRole == "sink" {
-		arrow = "<--󱐋---"
+		arrow = powerArrowCharging.Render("<==󱐋===")
 	} else {
-		arrow = "---󱐋-->"
+		arrow = "===󱐋==>"
 	}
 
 	// Handle single device vs multiple devices
@@ -173,17 +184,17 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 	// Use power_operation_mode to decide what to show
 	switch powerOperationMode {
 	case "default":
-		return "[USB]"
+		return powerModeUsb.Render("[USB]")
 	case "1.5A":
-		return "[1.5A]"
+		return powerMode1500mA.Render("[1.5A]")
 	case "3.0A":
-		return "[3A]"
+		return powerMode3000mA.Render("[3A]")
 	case "usb_power_delivery":
 		// Show PD version only
 		if partner.PDRevision != "" && partner.PDRevision != "0.0" {
-			return "[PD " + partner.PDRevision + "]"
+			return powerModePd.Render("[PD " + partner.PDRevision + "]")
 		}
-		return "[PD]"
+		return powerModePd.Render("[PD]")
 	default:
 		return ""
 	}
