@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/christian/usb-c/internal/parser"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/christian/usb-c/internal/ui"
 )
 
@@ -21,13 +21,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Load ports
-	ports, err := parser.LoadPorts(typecDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
+	if _, err := tea.NewProgram(newModel(typecDir), tea.WithAltScreen()).Run(); err != nil {
+		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
+}
 
-	// Render output
-	ui.RenderPorts(ports)
+func newModel(typecDir string) ui.UIModel {
+	return ui.UIModel{
+		TypecDir: typecDir,
+	}
 }
