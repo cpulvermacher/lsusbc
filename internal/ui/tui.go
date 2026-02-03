@@ -15,6 +15,7 @@ import (
 
 var (
 	inactive           = lipgloss.NewStyle().Foreground(lipgloss.Color("#4e4e4e"))
+	selectedPort       = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#2f2f2f"))
 	powerArrowCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#aad700"))
 
 	powerModePd     = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
@@ -25,7 +26,9 @@ var (
 
 type UIModel struct {
 	TypecDir string
-	ports    []model.Port
+
+	ports        []model.Port
+	selectedPort int
 }
 
 type RefreshTick time.Time
@@ -50,6 +53,10 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "r":
 			return refresh(m), nil
+		case "j", "down":
+			return moveSelection(m, +1), nil
+		case "k", "up":
+			return moveSelection(m, -1), nil
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
@@ -62,6 +69,16 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func moveSelection(m UIModel, increment int) tea.Model {
+	// no wrap-around
+	if len(m.ports) == 0 || m.selectedPort+increment < 0 || m.selectedPort+increment >= len(m.ports) {
+		return m
+	}
+
+	m.selectedPort += increment
+	return m
+}
+
 func (m UIModel) View() string {
 	if m.ports == nil {
 		return "Loading..."
@@ -71,9 +88,10 @@ func (m UIModel) View() string {
 	}
 
 	var lines string
-	for _, port := range m.ports {
+	for i, port := range m.ports {
+		lines += renderPort(port, i == m.selectedPort) + " "
 		if port.Partner == nil {
-			lines += fmt.Sprintf("%s %s\n", port.Name, inactive.Render("(no device connected)"))
+			lines += fmt.Sprintf("%s\n", inactive.Render("(no device connected)"))
 		} else {
 			lines += renderConnection(port)
 		}
@@ -89,9 +107,15 @@ func refresh(m UIModel) UIModel {
 		os.Exit(1)
 	}
 
-	return UIModel{
-		TypecDir: m.TypecDir,
-		ports:    ports,
+	m.ports = ports
+	return m
+}
+
+func renderPort(port model.Port, selected bool) string {
+	if !selected {
+		return port.Name
+	} else {
+		return selectedPort.Render(port.Name)
 	}
 }
 
@@ -113,12 +137,12 @@ func renderConnection(port model.Port) string {
 	if len(port.Partner.USBDevices) == 0 {
 		// No USB device info available - use generic name
 		deviceName := getFriendlyDeviceName(port.Partner)
-		return fmt.Sprintf("%s %s %s  %s\n", port.Name, arrow, deviceName, capabilities)
+		return fmt.Sprintf("%s %s  %s\n", arrow, deviceName, capabilities)
 	} else if len(port.Partner.USBDevices) == 1 {
 		// Single USB device - show on same line
 		device := port.Partner.USBDevices[0]
 		deviceName := formatUSBDevice(device)
-		return fmt.Sprintf("%s %s %s  %s\n", port.Name, arrow, deviceName, capabilities)
+		return fmt.Sprintf("%s %s  %s\n", arrow, deviceName, capabilities)
 	} else {
 		// Multiple USB devices - show as tree
 		t := tree.New().Enumerator(tree.RoundedEnumerator)
@@ -127,7 +151,7 @@ func renderConnection(port model.Port) string {
 			t.Child(deviceName)
 		}
 		indentedTree := lipgloss.NewStyle().PaddingLeft(12).Render(t.String())
-		return fmt.Sprintf("%s %s %s\n%s\n", port.Name, arrow, capabilities, indentedTree)
+		return fmt.Sprintf("%s %s\n%s\n", arrow, capabilities, indentedTree)
 	}
 }
 
