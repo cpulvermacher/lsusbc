@@ -3,15 +3,15 @@ package model
 import "fmt"
 
 type Port struct {
-	Name               string
-	DataRole           string
-	PowerRole          string
+	Name               string // e.g. "port0"
+	DataRole           string // "device" | "host"
+	PowerRole          string // "source" | "sink"
 	PowerOperationMode string // "default", "1.5A", "3.0A", or "usb_power_delivery"
 	Partner            *Partner
 }
 
 type Partner struct {
-	Name               string
+	Name               string // e.g. "port0-partner"
 	PDRevision         string
 	SourceCapabilities []PowerCapability
 	SinkCapabilities   []PowerCapability
