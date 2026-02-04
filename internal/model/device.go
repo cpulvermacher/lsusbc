@@ -17,10 +17,8 @@ type Partner struct {
 	SinkCapabilities   []PowerCapability
 	AlternateModes     []AlternateMode
 	AccessoryMode      string
-	DataRole           string
-	PowerRole          string
 	// USB devices connected through this partner (from symlinks in partner directory)
-	USBDevices         []USBDevice
+	USBDevices []USBDevice
 }
 
 type AlternateMode struct {

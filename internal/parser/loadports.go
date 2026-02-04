@@ -55,7 +55,7 @@ func parsePort(portDir string) (*model.Port, error) {
 	// Check for partner
 	partnerDir := portDir + "-partner"
 	if _, err := os.Stat(partnerDir); err == nil {
-		partner, err := parsePartner(partnerDir, port.DataRole, port.PowerRole)
+		partner, err := parsePartner(partnerDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to parse partner for %s: %v\n", port.Name, err)
 		} else {
@@ -67,11 +67,9 @@ func parsePort(portDir string) (*model.Port, error) {
 }
 
 // parsePartner parses partner information
-func parsePartner(partnerDir string, dataRole, powerRole string) (*model.Partner, error) {
+func parsePartner(partnerDir string) (*model.Partner, error) {
 	partner := &model.Partner{
-		Name:      filepath.Base(partnerDir),
-		DataRole:  dataRole,
-		PowerRole: powerRole,
+		Name: filepath.Base(partnerDir),
 	}
 
 	// Parse basic partner info

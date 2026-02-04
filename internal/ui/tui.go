@@ -160,7 +160,7 @@ func renderConnection(port model.Port) string {
 	// Handle single device vs multiple devices
 	if len(port.Partner.USBDevices) == 0 {
 		// No USB device info available - use generic name
-		deviceName := getFriendlyDeviceName(port.Partner)
+		deviceName := getFriendlyDeviceName(&port, port.Partner)
 		return fmt.Sprintf("%s %s  %s\n", arrow, deviceName, capabilities)
 	} else if len(port.Partner.USBDevices) == 1 {
 		// Single USB device - show on same line
@@ -194,7 +194,7 @@ func formatUSBDevice(device model.USBDevice) string {
 }
 
 // getFriendlyDeviceName generates a friendly device description when USB device info is not available
-func getFriendlyDeviceName(partner *model.Partner) string {
+func getFriendlyDeviceName(port *model.Port, partner *model.Partner) string {
 	// Priority 1: Alternate mode description(s)
 	if len(partner.AlternateModes) > 0 {
 		// If there's only one alternate mode, show it directly
@@ -212,13 +212,11 @@ func getFriendlyDeviceName(partner *model.Partner) string {
 		return modes + " Device"
 	}
 
-	// Priority 2: Charger (device role + sink power role)
-	if partner.DataRole == "device" && partner.PowerRole == "sink" {
+	if port.DataRole == "device" && port.PowerRole == "sink" {
 		return "Charger"
 	}
 
-	// Priority 3: Phone/Device (device role + source power role)
-	if partner.DataRole == "device" && partner.PowerRole == "source" {
+	if port.DataRole == "device" && port.PowerRole == "source" {
 		return "Phone/Device"
 	}
 
@@ -268,8 +266,6 @@ func renderPortDetails(port model.Port) string {
 	} else {
 		partner := port.Partner
 		content += fmt.Sprintf("Partner: %s\n", partner.Name)
-		content += fmt.Sprintf("  Data Role: %s\n", partner.DataRole)
-		content += fmt.Sprintf("  Power Role: %s\n", partner.PowerRole)
 		content += fmt.Sprintf("  PD Revision: %s\n", partner.PDRevision)
 		content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
 
