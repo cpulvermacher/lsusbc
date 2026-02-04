@@ -215,14 +215,6 @@ func getFriendlyDeviceName(port *model.Port, partner *model.Partner) string {
 		}
 	}
 
-	if port.DataRole == "device" && port.PowerRole == "sink" {
-		return "Charger"
-	}
-
-	if port.DataRole == "device" && port.PowerRole == "source" {
-		return "Phone/Device"
-	}
-
 	// Priority 4: Audio accessory
 	if partner.AccessoryMode == "audio" {
 		return "Audio Accessory"
