@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -197,19 +198,21 @@ func formatUSBDevice(device model.USBDevice) string {
 func getFriendlyDeviceName(port *model.Port, partner *model.Partner) string {
 	// Priority 1: Alternate mode description(s)
 	if len(partner.AlternateModes) > 0 {
-		// If there's only one alternate mode, show it directly
-		if len(partner.AlternateModes) == 1 {
-			return partner.AlternateModes[0].Description + " Device"
-		}
-		// If multiple alternate modes, concatenate them
-		var modes string
-		for i, mode := range partner.AlternateModes {
-			if i > 0 {
-				modes += ", "
+		// concatenate them
+		var modesBuilder strings.Builder
+		for _, mode := range partner.AlternateModes {
+			if mode.Description == "" {
+				continue
 			}
-			modes += mode.Description
+			if modesBuilder.Len() > 0 {
+				modesBuilder.WriteString(", ")
+			}
+			modesBuilder.WriteString(mode.Description)
 		}
-		return modes + " Device"
+		modes := modesBuilder.String()
+		if modes != "" {
+			return modes + " Device"
+		}
 	}
 
 	if port.DataRole == "device" && port.PowerRole == "sink" {
@@ -291,7 +294,11 @@ func renderPortDetails(port model.Port) string {
 		if len(partner.AlternateModes) > 0 {
 			content += "  Alternate Modes:\n"
 			for _, mode := range partner.AlternateModes {
-				content += fmt.Sprintf("    [%d] %s\n", mode.Index, mode.Description)
+				marker := " "
+				if mode.Active == "yes" {
+					marker = "*"
+				}
+				content += fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, mode.SVID, mode.VDO)
 			}
 			content += "\n"
 		}

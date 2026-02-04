@@ -130,12 +130,13 @@ func parseAlternateModes(partnerDir string) []model.AlternateMode {
 			altModePath := filepath.Join(partnerDir, name)
 			description := strings.TrimSpace(readFile(filepath.Join(altModePath, "description")))
 
-			if description != "" {
-				alternateModes = append(alternateModes, model.AlternateMode{
-					Index:       index,
-					Description: description,
-				})
-			}
+			alternateModes = append(alternateModes, model.AlternateMode{
+				Index:       index,
+				Description: description,
+				SVID:        strings.TrimSpace(readFile(filepath.Join(altModePath, "svid"))),
+				VDO:         strings.TrimSpace(readFile(filepath.Join(altModePath, "vdo"))),
+				Active:      strings.TrimSpace(readFile(filepath.Join(altModePath, "active"))),
+			})
 		}
 	}
 

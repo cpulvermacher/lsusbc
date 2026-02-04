@@ -24,6 +24,9 @@ type Partner struct {
 type AlternateMode struct {
 	Index       int    // The index (0, 1, 2, etc.)
 	Description string // Description from the alternate mode
+	SVID        string // Standard or Vendor ID
+	VDO         string // Vendor Defined Object
+	Active      string // "yes" | "no""
 }
 
 type USBDevice struct {
