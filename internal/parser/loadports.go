@@ -78,28 +78,55 @@ func parsePartner(partnerDir string) (*model.Partner, error) {
 	// Parse all alternate modes
 	partner.AlternateModes = parseAlternateModes(partnerDir)
 
-	// Parse PD information
-	pd1Dir := filepath.Join(partnerDir, "pd1")
-	if _, err := os.Stat(pd1Dir); err == nil {
-		partner.PDRevision = strings.TrimSpace(readFile(filepath.Join(pd1Dir, "revision")))
-
-		// Parse source capabilities
-		sourceCapsDir := filepath.Join(pd1Dir, "source-capabilities")
-		if caps, err := parseCapabilities(sourceCapsDir); err == nil {
-			partner.SourceCapabilities = caps
-		}
-
-		// Parse sink capabilities
-		sinkCapsDir := filepath.Join(pd1Dir, "sink-capabilities")
-		if caps, err := parseCapabilities(sinkCapsDir); err == nil {
-			partner.SinkCapabilities = caps
-		}
-	}
+	// Parse PD information from all pdX directories
+	parsePDDirectories(partner, partnerDir)
 
 	// Try to find and parse USB device information
 	parseUSBDeviceInfo(partner, partnerDir)
 
 	return partner, nil
+}
+
+// parsePDDirectories scans for and parses all PD directories (pd0, pd1, pd2, etc.)
+func parsePDDirectories(partner *model.Partner, partnerDir string) {
+	entries, err := os.ReadDir(partnerDir)
+	if err != nil {
+		return
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+
+		// Check if it matches the pattern: pd<digit>
+		if !strings.HasPrefix(name, "pd") || !entry.IsDir() {
+			continue
+		}
+
+		// Verify it's pdX format (pd followed by digits)
+		suffix := strings.TrimPrefix(name, "pd")
+		if _, err := strconv.Atoi(suffix); err != nil {
+			continue
+		}
+
+		pdDir := filepath.Join(partnerDir, name)
+
+		// Parse PD revision (use first one found if not already set)
+		if partner.PDRevision == "" {
+			partner.PDRevision = strings.TrimSpace(readFile(filepath.Join(pdDir, "revision")))
+		}
+
+		// Parse source capabilities
+		sourceCapsDir := filepath.Join(pdDir, "source-capabilities")
+		if caps, err := parseCapabilities(sourceCapsDir); err == nil {
+			partner.SourceCapabilities = append(partner.SourceCapabilities, caps...)
+		}
+
+		// Parse sink capabilities
+		sinkCapsDir := filepath.Join(pdDir, "sink-capabilities")
+		if caps, err := parseCapabilities(sinkCapsDir); err == nil {
+			partner.SinkCapabilities = append(partner.SinkCapabilities, caps...)
+		}
+	}
 }
 
 // parseAlternateModes scans for and parses all alternate mode directories
