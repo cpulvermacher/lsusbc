@@ -315,6 +315,12 @@ func renderPortDetails(port model.Port) string {
 				if device.IDProduct != "" {
 					content += fmt.Sprintf("      Product ID: %s\n", device.IDProduct)
 				}
+				if device.Version != "" {
+					content += fmt.Sprintf("      USB Version: %s\n", device.Version)
+				}
+				if device.Speed != "" {
+					content += fmt.Sprintf("      Speed: %s Mb/s\n", device.Speed)
+				}
 			}
 		}
 	}

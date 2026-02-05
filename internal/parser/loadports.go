@@ -297,6 +297,8 @@ func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
 				Serial:       strings.TrimSpace(readFile(filepath.Join(devicePath, "serial"))),
 				IDVendor:     strings.TrimSpace(readFile(filepath.Join(devicePath, "idVendor"))),
 				IDProduct:    strings.TrimSpace(readFile(filepath.Join(devicePath, "idProduct"))),
+				Speed:        strings.TrimSpace(readFile(filepath.Join(devicePath, "speed"))),
+				Version:      strings.TrimSpace(readFile(filepath.Join(devicePath, "version"))),
 			})
 		}
 	}

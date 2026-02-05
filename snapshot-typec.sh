@@ -175,7 +175,7 @@ if [ ${#usb_devices_to_copy[@]} -gt 0 ]; then
         mkdir -p "$device_dst"
 
         # Copy key files from the USB device
-        for file in manufacturer product serial idVendor idProduct; do
+        for file in manufacturer product serial idVendor idProduct speed version; do
             if [ -f "$device_src/$file" ]; then
                 if copy_file "$device_src/$file" "$device_dst/$file"; then
                     echo "  Copied: usb/devices/$device_id/$file"
