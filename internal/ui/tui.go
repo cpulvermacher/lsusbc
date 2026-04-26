@@ -62,8 +62,8 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case " ":
-			m.showingDetails = !m.showingDetails
+		case " ", "enter":
+			m.showingDetails = true
 			return m, nil
 		case "r":
 			return refresh(m), nil
@@ -71,7 +71,7 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return moveSelection(m, +1), nil
 		case "k", "up":
 			return moveSelection(m, -1), nil
-		case "q":
+		case "q", "esc":
 			if m.showingDetails {
 				m.showingDetails = false
 				return m, nil
@@ -138,9 +138,9 @@ func refresh(m UIModel) UIModel {
 
 func renderPort(port model.Port, selected bool) string {
 	if !selected {
-		return port.Name
+		return " " + port.Name
 	} else {
-		return selectedPort.Render(port.Name)
+		return ">" + selectedPort.Render(port.Name)
 	}
 }
 
@@ -332,7 +332,7 @@ func renderPortDetails(port model.Port) string {
 func renderPopupOverlay(background string, port model.Port) string {
 	details := renderPortDetails(port)
 
-	instruction := helpText.Render("\nPress Space or q to close")
+	instruction := helpText.Render("\nPress Escape or q to close")
 
 	popup := popupStyle.Render(details + instruction)
 
