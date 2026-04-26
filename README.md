@@ -13,11 +13,13 @@ A Go-based text user interface utility to display USB-C device information from 
 ## Usage
 
 View current USB-C ports:
+
 ```bash
 ./usb-c
 ```
 
 View from a snapshot directory:
+
 ```bash
 ./usb-c snapshots/charger-mac
 ```
@@ -25,7 +27,7 @@ View from a snapshot directory:
 ## Building
 
 ```bash
-go build -o usb-c .
+go build
 ```
 
 ## Example Output
@@ -38,12 +40,14 @@ port0 (no device connected)
 ```
 
 Arrow direction indicates power flow:
+
 - `---󱐋--->` Port provides power to device
 - `<--󱐋---` Port receives power from device
 
 ## Snapshot Tool
 
 Use `snapshot-typec.sh` to save USB-C state for later analysis:
+
 ```bash
 ./snapshot-typec.sh snapshots/my-device
 ```
@@ -54,7 +58,8 @@ Use `snapshot-typec.sh` to save USB-C state for later analysis:
 
 # references
 
-https://www.usb.org/sites/default/files/D1T2-3b%20-%20USB%20Type-C%20Linux%20Connector%20Class.pdf
-https://www.kernel.org/doc/html/latest/driver-api/usb/typec.html
-https://www.kernel.org/doc/html/latest/admin-guide/abi-testing.html#abi-sys-class-typec-port-data-role
-https://github.com/torvalds/linux/blob/master/drivers/usb/typec/class.c
+- https://www.usb.org/sites/default/files/D1T2-3b%20-%20USB%20Type-C%20Linux%20Connector%20Class.pdf
+- https://www.kernel.org/doc/html/latest/driver-api/usb/typec.html
+- https://www.kernel.org/doc/html/latest/admin-guide/abi-testing.html#abi-sys-class-typec-port-data-role
+- https://github.com/torvalds/linux/blob/master/drivers/usb/typec/class.c
+- https://fabiensanglard.net/usbcheat/index.html
