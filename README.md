@@ -8,7 +8,6 @@ A CLI utility to display USB-C device information from Linux's typec sysfs inter
 - Show power delivery information (current, PD version)
 - Directional arrows indicating power flow
 - Detect device types (DisplayPort, chargers, phones, etc.)
-- Works with live system or saved snapshots
 
 ## Usage
 
@@ -16,12 +15,6 @@ View current USB-C ports:
 
 ```bash
 lsusbc
-```
-
-View from a snapshot directory:
-
-```bash
-lsusbc snapshots/charger-mac
 ```
 
 ## Building
@@ -43,14 +36,6 @@ Arrow direction indicates power flow:
 
 - `---󱐋--->` Port provides power to device
 - `<--󱐋---` Port receives power from device
-
-## Snapshot Tool
-
-Use `snapshot-typec.sh` to save USB-C state for later analysis:
-
-```bash
-./snapshot-typec.sh snapshots/my-device
-```
 
 # alternatives
 
