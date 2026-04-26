@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/christian/usb-c/internal/model"
+	"github.com/cpulvermacher/lsusbc/internal/model"
 )
 
 // LoadPorts loads all ports from a typec directory (live system or snapshot)

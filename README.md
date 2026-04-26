@@ -1,6 +1,6 @@
-# USB-C TUI Utility
+# lsusbc
 
-A Go-based text user interface utility to display USB-C device information from Linux's typec sysfs interface.
+A CLI utility to display USB-C device information from Linux's typec sysfs interface.
 
 ## Features
 
@@ -15,13 +15,13 @@ A Go-based text user interface utility to display USB-C device information from 
 View current USB-C ports:
 
 ```bash
-./usb-c
+lsusbc
 ```
 
 View from a snapshot directory:
 
 ```bash
-./usb-c snapshots/charger-mac
+lsusbc snapshots/charger-mac
 ```
 
 ## Building

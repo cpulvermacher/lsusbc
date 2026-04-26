@@ -10,8 +10,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/tree"
 
-	"github.com/christian/usb-c/internal/model"
-	"github.com/christian/usb-c/internal/parser"
+	"github.com/cpulvermacher/lsusbc/internal/model"
+	"github.com/cpulvermacher/lsusbc/internal/parser"
 )
 
 var (

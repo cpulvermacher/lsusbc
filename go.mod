@@ -1,4 +1,4 @@
-module github.com/christian/usb-c
+module github.com/cpulvermacher/lsusbc
 
 go 1.24.4
 
