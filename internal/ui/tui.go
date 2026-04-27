@@ -136,11 +136,22 @@ func refresh(m UIModel) UIModel {
 	return m
 }
 
+func portDisplayName(name string) string {
+	if strings.HasPrefix(name, "port") {
+		var i int
+		if _, err := fmt.Sscanf(name[4:], "%d", &i); err == nil {
+			return fmt.Sprintf("Port %d", i)
+		}
+	}
+	return name
+}
+
 func renderPort(port model.Port, selected bool) string {
+	label := portDisplayName(port.Name)
 	if !selected {
-		return " " + port.Name
+		return " " + label
 	} else {
-		return ">" + selectedPort.Render(port.Name)
+		return ">" + selectedPort.Render(label)
 	}
 }
 
@@ -256,7 +267,7 @@ func renderPortDetails(port model.Port) string {
 	var content string
 
 	// Port basic info
-	content += fmt.Sprintf("Port: %s\n", port.Name)
+	content += fmt.Sprintf("Port: %s\n", portDisplayName(port.Name))
 	content += fmt.Sprintf("Data Role: %s\n", port.DataRole)
 	content += fmt.Sprintf("Power Role: %s\n", port.PowerRole)
 	content += fmt.Sprintf("Power Operation Mode: %s\n\n", port.PowerOperationMode)
