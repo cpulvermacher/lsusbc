@@ -57,6 +57,25 @@ func (pc PowerCapability) FormatVoltage() string {
 	return formatMilliVolts(pc.Voltage)
 }
 
+// Watts returns the maximum power in watts for this capability.
+func (pc PowerCapability) Watts() int {
+	if pc.Programmable {
+		return pc.MaximumVoltage * pc.MaximumCurrent / 1_000_000
+	}
+	return pc.Voltage * pc.MaximumCurrent / 1_000_000
+}
+
+// MaxWatts returns the maximum wattage across a slice of capabilities.
+func MaxWatts(caps []PowerCapability) int {
+	max := 0
+	for _, c := range caps {
+		if w := c.Watts(); w > max {
+			max = w
+		}
+	}
+	return max
+}
+
 func formatMilliVolts(mv int) string {
 	if mv%1000 == 0 {
 		return fmt.Sprintf("%dV", mv/1000)
