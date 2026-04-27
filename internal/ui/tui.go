@@ -328,6 +328,19 @@ func renderPortDetails(port model.Port) string {
 	return content
 }
 
+// ListPorts loads and prints details for all ports to stdout.
+func ListPorts(typecDir string) {
+	ports, err := parser.LoadPorts(typecDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
+		os.Exit(1)
+	}
+	for _, port := range ports {
+		fmt.Print(renderPortDetails(port))
+		fmt.Println()
+	}
+}
+
 // renderPopupOverlay renders the port details as a popup overlay
 func renderPopupOverlay(background string, port model.Port) string {
 	details := renderPortDetails(port)
