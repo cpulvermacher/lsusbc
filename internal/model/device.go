@@ -8,6 +8,13 @@ type Port struct {
 	PowerRole          string // "source" | "sink"
 	PowerOperationMode string // "default", "1.5A", "3.0A", or "usb_power_delivery"
 	Partner            *Partner
+	Cable              *Cable
+}
+
+type Cable struct {
+	Type           string          // "passive", "active", "undefined"
+	PlugType       string          // "type-a", "type-b", "type-c", "captive"
+	AlternateModes []AlternateMode // from plug device(s)
 }
 
 type Partner struct {

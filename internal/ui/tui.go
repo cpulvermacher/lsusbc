@@ -261,6 +261,29 @@ func renderPortDetails(port model.Port) string {
 	content += fmt.Sprintf("Power Role: %s\n", port.PowerRole)
 	content += fmt.Sprintf("Power Operation Mode: %s\n\n", port.PowerOperationMode)
 
+	// Cable info
+	if port.Cable != nil {
+		cable := port.Cable
+		content += "Cable:\n"
+		if cable.Type != "" && cable.Type != "undefined" {
+			content += fmt.Sprintf("  Type: %s\n", cable.Type)
+		}
+		if cable.PlugType != "" {
+			content += fmt.Sprintf("  Plug: %s\n", cable.PlugType)
+		}
+		if len(cable.AlternateModes) > 0 {
+			content += "  Alternate Modes:\n"
+			for _, mode := range cable.AlternateModes {
+				marker := " "
+				if mode.Active == "yes" {
+					marker = "*"
+				}
+				content += fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, mode.SVID, mode.VDO)
+			}
+		}
+		content += "\n"
+	}
+
 	// Partner info
 	if port.Partner == nil {
 		content += fmt.Sprintf("Connected Device: %s\n", inactive.Render("(no device connected)"))

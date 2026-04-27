@@ -52,6 +52,17 @@ func parsePort(portDir string) (*model.Port, error) {
 	port.PowerRole = extractActiveRole(readFile(filepath.Join(portDir, "power_role")))
 	port.PowerOperationMode = strings.TrimSpace(readFile(filepath.Join(portDir, "power_operation_mode")))
 
+	// Check for cable
+	cableDir := portDir + "-cable"
+	if _, err := os.Stat(cableDir); err == nil {
+		cable, err := parseCable(cableDir, portDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to parse cable for %s: %v\n", port.Name, err)
+		} else {
+			port.Cable = cable
+		}
+	}
+
 	// Check for partner
 	partnerDir := portDir + "-partner"
 	if _, err := os.Stat(partnerDir); err == nil {
@@ -130,6 +141,27 @@ func parsePDDirectories(partner *model.Partner, partnerDir string) {
 			partner.SinkCapabilities = append(partner.SinkCapabilities, caps...)
 		}
 	}
+}
+
+// parseCable parses cable information from the cable directory and its plug(s)
+func parseCable(cableDir string, portDir string) (*model.Cable, error) {
+	cable := &model.Cable{
+		Type:     strings.TrimSpace(readFile(filepath.Join(cableDir, "type"))),
+		PlugType: strings.TrimSpace(readFile(filepath.Join(cableDir, "plug_type"))),
+	}
+
+	// Plug directories (port0-plug0, port0-plug1, ...) are siblings of the port
+	portName := filepath.Base(portDir)
+	typecDir := filepath.Dir(portDir)
+	for i := 0; ; i++ {
+		plugDir := filepath.Join(typecDir, fmt.Sprintf("%s-plug%d", portName, i))
+		if _, err := os.Stat(plugDir); err != nil {
+			break
+		}
+		cable.AlternateModes = append(cable.AlternateModes, parseAlternateModes(plugDir)...)
+	}
+
+	return cable, nil
 }
 
 // parseAlternateModes scans for and parses all alternate mode directories
