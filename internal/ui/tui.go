@@ -257,10 +257,10 @@ func renderPortDetails(port model.Port) string {
 
 	// Partner info
 	if port.Partner == nil {
-		content += "Partner: (none)\n"
+		content += fmt.Sprintf("Connected Device: %s\n", inactive.Render("(no device connected)"))
 	} else {
 		partner := port.Partner
-		content += fmt.Sprintf("Partner: %s\n", partner.Name)
+		content += fmt.Sprintf("Connected Device: %s\n", partner.Name)
 		content += fmt.Sprintf("  PD Revision: %s\n", partner.PDRevision)
 		content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
 
