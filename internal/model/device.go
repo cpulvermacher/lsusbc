@@ -13,6 +13,7 @@ type Port struct {
 type Partner struct {
 	Name               string // e.g. "port0-partner"
 	PDRevision         string
+	ACPowered          bool // unconstrained_power bit: source is externally (AC) powered (false: battery-powered or not set)
 	SourceCapabilities []PowerCapability
 	SinkCapabilities   []PowerCapability
 	AlternateModes     []AlternateMode

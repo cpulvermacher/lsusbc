@@ -242,6 +242,9 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 		if watts := model.MaxWatts(partner.SourceCapabilities); watts > 0 {
 			label = fmt.Sprintf("%s, %dW", label, watts)
 		}
+		if partner.ACPowered {
+			label += ", AC"
+		}
 		return powerModePd.Render("[" + label + "]")
 	default:
 		return ""
@@ -265,6 +268,9 @@ func renderPortDetails(port model.Port) string {
 		partner := port.Partner
 		content += fmt.Sprintf("Connected Device: %s\n", partner.Name)
 		content += fmt.Sprintf("  PD Revision: %s\n", partner.PDRevision)
+		if partner.ACPowered {
+			content += "  Power Source: AC Powered\n"
+		}
 		content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
 
 		// Source capabilities

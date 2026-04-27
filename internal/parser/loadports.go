@@ -120,6 +120,9 @@ func parsePDDirectories(partner *model.Partner, partnerDir string) {
 		if caps, err := parseCapabilities(sourceCapsDir); err == nil {
 			partner.SourceCapabilities = append(partner.SourceCapabilities, caps...)
 		}
+		if strings.TrimSpace(readFile(filepath.Join(sourceCapsDir, "1:fixed_supply", "unconstrained_power"))) == "1" {
+			partner.ACPowered = true
+		}
 
 		// Parse sink capabilities
 		sinkCapsDir := filepath.Join(pdDir, "sink-capabilities")
