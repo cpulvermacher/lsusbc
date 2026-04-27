@@ -235,11 +235,14 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 	case "3.0A":
 		return powerMode3000mA.Render("[3A]")
 	case "usb_power_delivery":
-		// Show PD version only
+		label := "PD"
 		if partner.PDRevision != "" && partner.PDRevision != "0.0" {
-			return powerModePd.Render("[PD " + partner.PDRevision + "]")
+			label = "PD " + partner.PDRevision
 		}
-		return powerModePd.Render("[PD]")
+		if watts := model.MaxWatts(partner.SourceCapabilities); watts > 0 {
+			label = fmt.Sprintf("%s, %dW", label, watts)
+		}
+		return powerModePd.Render("[" + label + "]")
 	default:
 		return ""
 	}
