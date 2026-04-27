@@ -41,16 +41,27 @@ type USBDevice struct {
 }
 
 type PowerCapability struct {
-	Voltage        int // in mV
+	Voltage        int // in mV (fixed supply)
 	MaximumCurrent int // in mA
+	// Programmable supply fields (mutually exclusive with Voltage)
+	Programmable   bool
+	MinimumVoltage int // in mV
+	MaximumVoltage int // in mV
 }
 
-// FormatVoltage converts mV to human-readable format (e.g., "5V", "20V")
+// FormatVoltage converts mV to human-readable format (e.g., "5V", "20V", "3.3-21V")
 func (pc PowerCapability) FormatVoltage() string {
-	if pc.Voltage%1000 == 0 {
-		return fmt.Sprintf("%dV", pc.Voltage/1000)
+	if pc.Programmable {
+		return fmt.Sprintf("%s-%s", formatMilliVolts(pc.MinimumVoltage), formatMilliVolts(pc.MaximumVoltage))
 	}
-	return fmt.Sprintf("%.1fV", float64(pc.Voltage)/1000.0)
+	return formatMilliVolts(pc.Voltage)
+}
+
+func formatMilliVolts(mv int) string {
+	if mv%1000 == 0 {
+		return fmt.Sprintf("%dV", mv/1000)
+	}
+	return fmt.Sprintf("%.2gV", float64(mv)/1000.0)
 }
 
 // FormatCurrent converts mA to human-readable format (e.g., "1.5A", "3A")

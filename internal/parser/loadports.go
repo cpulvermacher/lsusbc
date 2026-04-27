@@ -184,24 +184,42 @@ func parseCapabilities(capsDir string) ([]model.PowerCapability, error) {
 		}
 
 		capDir := filepath.Join(capsDir, entry.Name())
+		name := entry.Name()
 
-		voltageStr := strings.TrimSpace(readFile(filepath.Join(capDir, "voltage")))
 		currentStr := strings.TrimSpace(readFile(filepath.Join(capDir, "maximum_current")))
-
-		voltage, err := parseMilliValue(voltageStr)
-		if err != nil {
-			continue
-		}
-
 		current, err := parseMilliValue(currentStr)
 		if err != nil {
 			continue
 		}
 
-		capabilities = append(capabilities, model.PowerCapability{
-			Voltage:        voltage,
-			MaximumCurrent: current,
-		})
+		if strings.HasSuffix(name, ":programmable_supply") || strings.HasSuffix(name, ":variable_supply") {
+			minVoltageStr := strings.TrimSpace(readFile(filepath.Join(capDir, "minimum_voltage")))
+			maxVoltageStr := strings.TrimSpace(readFile(filepath.Join(capDir, "maximum_voltage")))
+			minVoltage, err := parseMilliValue(minVoltageStr)
+			if err != nil {
+				continue
+			}
+			maxVoltage, err := parseMilliValue(maxVoltageStr)
+			if err != nil {
+				continue
+			}
+			capabilities = append(capabilities, model.PowerCapability{
+				Programmable:   true,
+				MinimumVoltage: minVoltage,
+				MaximumVoltage: maxVoltage,
+				MaximumCurrent: current,
+			})
+		} else {
+			voltageStr := strings.TrimSpace(readFile(filepath.Join(capDir, "voltage")))
+			voltage, err := parseMilliValue(voltageStr)
+			if err != nil {
+				continue
+			}
+			capabilities = append(capabilities, model.PowerCapability{
+				Voltage:        voltage,
+				MaximumCurrent: current,
+			})
+		}
 	}
 
 	return capabilities, nil
