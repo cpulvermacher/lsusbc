@@ -17,13 +17,13 @@ func extractActiveRole(content string) string {
 	return content
 }
 
-// readFile reads a file and returns its content, or empty string on error
+// readFile reads a file and returns its (trimmed) content, or empty string on error
 func readFile(path string) string {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return ""
 	}
-	return string(content)
+	return strings.TrimSpace(string(content))
 }
 
 // parseMilliValue parses values like "5000mV" or "3000mA" and returns the integer value

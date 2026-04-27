@@ -36,7 +36,7 @@ func parsePDDirectories(partner *model.Partner, partnerDir string) {
 
 		// Parse PD revision (use first one found if not already set)
 		if partner.PDRevision == "" {
-			partner.PDRevision = strings.TrimSpace(readFile(filepath.Join(pdDir, "revision")))
+			partner.PDRevision = readFile(filepath.Join(pdDir, "revision"))
 		}
 
 		// Parse source capabilities
@@ -44,7 +44,7 @@ func parsePDDirectories(partner *model.Partner, partnerDir string) {
 		if caps, err := parseCapabilities(sourceCapsDir); err == nil {
 			partner.SourceCapabilities = append(partner.SourceCapabilities, caps...)
 		}
-		if strings.TrimSpace(readFile(filepath.Join(sourceCapsDir, "1:fixed_supply", "unconstrained_power"))) == "1" {
+		if readFile(filepath.Join(sourceCapsDir, "1:fixed_supply", "unconstrained_power")) == "1" {
 			partner.ACPowered = true
 		}
 
@@ -72,15 +72,15 @@ func parseCapabilities(capsDir string) ([]model.PowerCapability, error) {
 		capDir := filepath.Join(capsDir, entry.Name())
 		name := entry.Name()
 
-		currentStr := strings.TrimSpace(readFile(filepath.Join(capDir, "maximum_current")))
+		currentStr := readFile(filepath.Join(capDir, "maximum_current"))
 		current, err := parseMilliValue(currentStr)
 		if err != nil {
 			continue
 		}
 
 		if strings.HasSuffix(name, ":programmable_supply") || strings.HasSuffix(name, ":variable_supply") {
-			minVoltageStr := strings.TrimSpace(readFile(filepath.Join(capDir, "minimum_voltage")))
-			maxVoltageStr := strings.TrimSpace(readFile(filepath.Join(capDir, "maximum_voltage")))
+			minVoltageStr := readFile(filepath.Join(capDir, "minimum_voltage"))
+			maxVoltageStr := readFile(filepath.Join(capDir, "maximum_voltage"))
 			minVoltage, err := parseMilliValue(minVoltageStr)
 			if err != nil {
 				continue
@@ -96,7 +96,7 @@ func parseCapabilities(capsDir string) ([]model.PowerCapability, error) {
 				MaximumCurrent: current,
 			})
 		} else {
-			voltageStr := strings.TrimSpace(readFile(filepath.Join(capDir, "voltage")))
+			voltageStr := readFile(filepath.Join(capDir, "voltage"))
 			voltage, err := parseMilliValue(voltageStr)
 			if err != nil {
 				continue

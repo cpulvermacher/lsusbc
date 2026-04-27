@@ -66,8 +66,8 @@ func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
 		}
 
 		// Parse device information
-		manufacturer := strings.TrimSpace(readFile(filepath.Join(devicePath, "manufacturer")))
-		product := strings.TrimSpace(readFile(filepath.Join(devicePath, "product")))
+		manufacturer := readFile(filepath.Join(devicePath, "manufacturer"))
+		product := readFile(filepath.Join(devicePath, "product"))
 
 		// Only add if we have some useful information
 		if manufacturer != "" || product != "" {
@@ -75,11 +75,11 @@ func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
 				DeviceID:     name,
 				Manufacturer: manufacturer,
 				Product:      product,
-				Serial:       strings.TrimSpace(readFile(filepath.Join(devicePath, "serial"))),
-				IDVendor:     strings.TrimSpace(readFile(filepath.Join(devicePath, "idVendor"))),
-				IDProduct:    strings.TrimSpace(readFile(filepath.Join(devicePath, "idProduct"))),
-				Speed:        strings.TrimSpace(readFile(filepath.Join(devicePath, "speed"))),
-				Version:      strings.TrimSpace(readFile(filepath.Join(devicePath, "version"))),
+				Serial:       readFile(filepath.Join(devicePath, "serial")),
+				IDVendor:     readFile(filepath.Join(devicePath, "idVendor")),
+				IDProduct:    readFile(filepath.Join(devicePath, "idProduct")),
+				Speed:        readFile(filepath.Join(devicePath, "speed")),
+				Version:      readFile(filepath.Join(devicePath, "version")),
 			})
 		}
 	}

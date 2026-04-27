@@ -51,7 +51,7 @@ func parsePort(portDir string) (*model.Port, error) {
 	// Parse port files
 	port.DataRole = extractActiveRole(readFile(filepath.Join(portDir, "data_role")))
 	port.PowerRole = extractActiveRole(readFile(filepath.Join(portDir, "power_role")))
-	port.PowerOperationMode = strings.TrimSpace(readFile(filepath.Join(portDir, "power_operation_mode")))
+	port.PowerOperationMode = readFile(filepath.Join(portDir, "power_operation_mode"))
 
 	// Check for cable
 	cableDir := portDir + "-cable"
@@ -85,7 +85,7 @@ func parsePartner(partnerDir string) (*model.Partner, error) {
 	}
 
 	// Parse basic partner info
-	partner.AccessoryMode = strings.TrimSpace(readFile(filepath.Join(partnerDir, "accessory_mode")))
+	partner.AccessoryMode = readFile(filepath.Join(partnerDir, "accessory_mode"))
 
 	// Parse all alternate modes
 	partner.AlternateModes = parseAlternateModes(partnerDir)
@@ -102,8 +102,8 @@ func parsePartner(partnerDir string) (*model.Partner, error) {
 // parseCable parses cable information from the cable directory and its plug(s)
 func parseCable(cableDir string, portDir string) (*model.Cable, error) {
 	cable := &model.Cable{
-		Type:     strings.TrimSpace(readFile(filepath.Join(cableDir, "type"))),
-		PlugType: strings.TrimSpace(readFile(filepath.Join(cableDir, "plug_type"))),
+		Type:     readFile(filepath.Join(cableDir, "type")),
+		PlugType: readFile(filepath.Join(cableDir, "plug_type")),
 	}
 
 	// Plug directories (port0-plug0, port0-plug1, ...) are siblings of the port
@@ -146,14 +146,14 @@ func parseAlternateModes(partnerDir string) []model.AlternateMode {
 
 			// Parse the alternate mode description
 			altModePath := filepath.Join(partnerDir, name)
-			description := strings.TrimSpace(readFile(filepath.Join(altModePath, "description")))
+			description := readFile(filepath.Join(altModePath, "description"))
 
 			alternateModes = append(alternateModes, model.AlternateMode{
 				Index:       index,
 				Description: description,
-				SVID:        strings.TrimSpace(readFile(filepath.Join(altModePath, "svid"))),
-				VDO:         strings.TrimSpace(readFile(filepath.Join(altModePath, "vdo"))),
-				Active:      strings.TrimSpace(readFile(filepath.Join(altModePath, "active"))),
+				SVID:        readFile(filepath.Join(altModePath, "svid")),
+				VDO:         readFile(filepath.Join(altModePath, "vdo")),
+				Active:      readFile(filepath.Join(altModePath, "active")),
 			})
 		}
 	}
