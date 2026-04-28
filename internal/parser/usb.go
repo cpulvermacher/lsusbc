@@ -12,10 +12,6 @@ import (
 // by looking for device symlinks (like "1-4", "2-1") in the partner directory
 // Note that depending on hardware, these might just not exist
 func parseUSBDeviceInfo(partnerDir string) []model.USBDevice {
-	return parseUSBDeviceInfoFrom(partnerDir, "/sys/bus/usb/devices")
-}
-
-func parseUSBDeviceInfoFrom(partnerDir string, usbDevicesDir string) []model.USBDevice {
 	entries, err := os.ReadDir(partnerDir)
 	if err != nil {
 		return nil
@@ -38,8 +34,9 @@ func parseUSBDeviceInfoFrom(partnerDir string, usbDevicesDir string) []model.USB
 			continue
 		}
 
-		devicePath := filepath.Join(usbDevicesDir, name)
-		if _, err := os.Stat(devicePath); err != nil {
+		// Resolve symlink to get the actual device path
+		devicePath, err := filepath.EvalSymlinks(filepath.Join(partnerDir, name))
+		if err != nil {
 			continue
 		}
 

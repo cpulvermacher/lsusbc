@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func makeUSBDevice(t *testing.T, usbDir, id string, files map[string]string) {
+func makeUSBDevice(t *testing.T, usbDir, id string, files map[string]string) string {
 	t.Helper()
 	dir := filepath.Join(usbDir, id)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -17,13 +17,14 @@ func makeUSBDevice(t *testing.T, usbDir, id string, files map[string]string) {
 			t.Fatal(err)
 		}
 	}
+	return dir
 }
 
 func TestParseUSBDeviceInfo(t *testing.T) {
 	partnerDir := t.TempDir()
 	usbDir := t.TempDir()
 
-	makeUSBDevice(t, usbDir, "1-4", map[string]string{
+	devicePath := makeUSBDevice(t, usbDir, "1-4", map[string]string{
 		"manufacturer": "Acme Corp\n",
 		"product":      "Widget\n",
 		"serial":       "SN123\n",
@@ -32,12 +33,11 @@ func TestParseUSBDeviceInfo(t *testing.T) {
 		"speed":        "480\n",
 		"version":      "2.00\n",
 	})
-
-	if err := os.MkdirAll(filepath.Join(partnerDir, "1-4"), 0755); err != nil {
+	if err := os.Symlink(devicePath, filepath.Join(partnerDir, "1-4")); err != nil {
 		t.Fatal(err)
 	}
 
-	devices := parseUSBDeviceInfoFrom(partnerDir, usbDir)
+	devices := parseUSBDeviceInfo(partnerDir)
 
 	if len(devices) != 1 {
 		t.Fatalf("got %d USB devices, want 1", len(devices))
@@ -67,15 +67,15 @@ func TestParseUSBDeviceInfo_NoManufacturerOrProduct(t *testing.T) {
 	partnerDir := t.TempDir()
 	usbDir := t.TempDir()
 
-	makeUSBDevice(t, usbDir, "1-4", map[string]string{
+	devicePath := makeUSBDevice(t, usbDir, "1-4", map[string]string{
 		"idVendor":  "1234\n",
 		"idProduct": "5678\n",
 	})
-	if err := os.MkdirAll(filepath.Join(partnerDir, "1-4"), 0755); err != nil {
+	if err := os.Symlink(devicePath, filepath.Join(partnerDir, "1-4")); err != nil {
 		t.Fatal(err)
 	}
 
-	devices := parseUSBDeviceInfoFrom(partnerDir, usbDir)
+	devices := parseUSBDeviceInfo(partnerDir)
 
 	if len(devices) != 0 {
 		t.Errorf("got %d USB devices, want 0 (no manufacturer/product)", len(devices))
@@ -84,7 +84,6 @@ func TestParseUSBDeviceInfo_NoManufacturerOrProduct(t *testing.T) {
 
 func TestParseUSBDeviceInfo_SkipsInterfaces(t *testing.T) {
 	partnerDir := t.TempDir()
-	usbDir := t.TempDir()
 
 	// Interface entries (contain colon) should be ignored
 	for _, name := range []string{"1-4:1.0", "1-4:1.1"} {
@@ -93,7 +92,7 @@ func TestParseUSBDeviceInfo_SkipsInterfaces(t *testing.T) {
 		}
 	}
 
-	devices := parseUSBDeviceInfoFrom(partnerDir, usbDir)
+	devices := parseUSBDeviceInfo(partnerDir)
 
 	if len(devices) != 0 {
 		t.Errorf("got %d USB devices, want 0 (interfaces should be skipped)", len(devices))
@@ -102,32 +101,30 @@ func TestParseUSBDeviceInfo_SkipsInterfaces(t *testing.T) {
 
 func TestParseUSBDeviceInfo_SkipsPortDirs(t *testing.T) {
 	partnerDir := t.TempDir()
-	usbDir := t.TempDir()
 
 	if err := os.MkdirAll(filepath.Join(partnerDir, "port0-partner"), 0755); err != nil {
 		t.Fatal(err)
 	}
 
-	devices := parseUSBDeviceInfoFrom(partnerDir, usbDir)
+	devices := parseUSBDeviceInfo(partnerDir)
 
 	if len(devices) != 0 {
 		t.Errorf("got %d USB devices, want 0 (port dirs should be skipped)", len(devices))
 	}
 }
 
-func TestParseUSBDeviceInfo_DeviceNotInUSBDir(t *testing.T) {
+func TestParseUSBDeviceInfo_BrokenSymlink(t *testing.T) {
 	partnerDir := t.TempDir()
-	usbDir := t.TempDir()
 
 	// Entry exists in partner dir but not in usbDir
-	if err := os.MkdirAll(filepath.Join(partnerDir, "1-4"), 0755); err != nil {
+	if err := os.Symlink("/nonexistent/path", filepath.Join(partnerDir, "1-4")); err != nil {
 		t.Fatal(err)
 	}
 
-	devices := parseUSBDeviceInfoFrom(partnerDir, usbDir)
+	devices := parseUSBDeviceInfo(partnerDir)
 
 	if len(devices) != 0 {
-		t.Errorf("got %d USB devices, want 0 (device absent from usb dir)", len(devices))
+		t.Errorf("got %d USB devices, want 0 (broken symlink should be skipped)", len(devices))
 	}
 }
 
@@ -136,16 +133,16 @@ func TestParseUSBDeviceInfo_MultipleDevices(t *testing.T) {
 	usbDir := t.TempDir()
 
 	for _, id := range []string{"1-4", "2-1.3"} {
-		makeUSBDevice(t, usbDir, id, map[string]string{
+		devicePath := makeUSBDevice(t, usbDir, id, map[string]string{
 			"manufacturer": "Vendor",
 			"product":      "Device " + id,
 		})
-		if err := os.MkdirAll(filepath.Join(partnerDir, id), 0755); err != nil {
+		if err := os.Symlink(devicePath, filepath.Join(partnerDir, id)); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	devices := parseUSBDeviceInfoFrom(partnerDir, usbDir)
+	devices := parseUSBDeviceInfo(partnerDir)
 
 	if len(devices) != 2 {
 		t.Errorf("got %d USB devices, want 2", len(devices))
