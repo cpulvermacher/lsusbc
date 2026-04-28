@@ -15,7 +15,7 @@ func TestExtractActiveRole(t *testing.T) {
 		{"[source] sink", "source"},
 		{"host [device]", "device"},
 		{"[sink]", "sink"},
-		{"no brackets", "no brackets"},
+		{"no brackets", ""},
 		{"  [host] device  ", "host"},
 		{"", ""},
 	}

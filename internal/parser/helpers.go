@@ -14,7 +14,7 @@ func extractActiveRole(content string) string {
 	if start != -1 && end != -1 && end > start {
 		return content[start+1 : end]
 	}
-	return content
+	return ""
 }
 
 // readFile reads a file and returns its (trimmed) content, or empty string on error
