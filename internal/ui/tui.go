@@ -169,22 +169,16 @@ func renderConnection(port model.Port) string {
 		arrow = "===󱐋==>"
 	}
 
-	// Handle single device vs multiple devices
-	if len(port.Partner.USBDevices) == 0 {
-		// No USB device info available - use generic name
+	devices := port.Partner.USBDevices
+	if len(devices) == 0 {
 		deviceName := getFriendlyDeviceName(&port, port.Partner)
 		return fmt.Sprintf("%s %s  %s\n", arrow, deviceName, capabilities)
-	} else if len(port.Partner.USBDevices) == 1 {
-		// Single USB device - show on same line
-		device := port.Partner.USBDevices[0]
-		deviceName := formatUSBDevice(device)
-		return fmt.Sprintf("%s %s  %s\n", arrow, deviceName, capabilities)
+	} else if len(devices) == 1 && len(devices[0].USBDevices) == 0 {
+		return fmt.Sprintf("%s %s  %s\n", arrow, formatUSBDevice(devices[0]), capabilities)
 	} else {
-		// Multiple USB devices - show as tree
 		t := tree.New().Enumerator(tree.RoundedEnumerator)
-		for _, device := range port.Partner.USBDevices {
-			deviceName := formatUSBDevice(device)
-			t.Child(deviceName)
+		for _, device := range devices {
+			t.Child(usbDeviceTree(device))
 		}
 		indentedTree := lipgloss.NewStyle().PaddingLeft(12).Render(t.String())
 		return fmt.Sprintf("%s %s\n%s\n", arrow, capabilities, indentedTree)
@@ -203,6 +197,14 @@ func formatUSBDevice(device model.USBDevice) string {
 		return device.Manufacturer + " Device"
 	}
 	return "USB Device"
+}
+
+func usbDeviceTree(device model.USBDevice) *tree.Tree {
+	t := tree.New().Root(formatUSBDevice(device))
+	for _, sub := range device.USBDevices {
+		t.Child(usbDeviceTree(sub))
+	}
+	return t
 }
 
 // getFriendlyDeviceName generates a friendly device description when USB device info is not available
@@ -260,6 +262,36 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 	default:
 		return ""
 	}
+}
+
+func renderUSBDeviceDetails(device model.USBDevice, indent string) string {
+	var s string
+	s += fmt.Sprintf("%s%s\n", indent, device.DeviceID)
+	if device.Manufacturer != "" {
+		s += fmt.Sprintf("%s  Manufacturer: %s\n", indent, device.Manufacturer)
+	}
+	if device.Product != "" {
+		s += fmt.Sprintf("%s  Product: %s\n", indent, device.Product)
+	}
+	if device.Serial != "" {
+		s += fmt.Sprintf("%s  Serial: %s\n", indent, device.Serial)
+	}
+	if device.IDVendor != "" {
+		s += fmt.Sprintf("%s  Vendor ID: %s\n", indent, device.IDVendor)
+	}
+	if device.IDProduct != "" {
+		s += fmt.Sprintf("%s  Product ID: %s\n", indent, device.IDProduct)
+	}
+	if device.Version != "" {
+		s += fmt.Sprintf("%s  USB Version: %s\n", indent, device.Version)
+	}
+	if device.Speed != "" {
+		s += fmt.Sprintf("%s  Speed: %s Mb/s\n", indent, device.Speed)
+	}
+	for _, sub := range device.USBDevices {
+		s += renderUSBDeviceDetails(sub, indent+"  ")
+	}
+	return s
 }
 
 // renderPortDetails formats all Port model fields for display
@@ -342,28 +374,7 @@ func renderPortDetails(port model.Port) string {
 		if len(partner.USBDevices) > 0 {
 			content += "  USB Devices:\n"
 			for _, device := range partner.USBDevices {
-				content += fmt.Sprintf("    %s\n", device.DeviceID)
-				if device.Manufacturer != "" {
-					content += fmt.Sprintf("      Manufacturer: %s\n", device.Manufacturer)
-				}
-				if device.Product != "" {
-					content += fmt.Sprintf("      Product: %s\n", device.Product)
-				}
-				if device.Serial != "" {
-					content += fmt.Sprintf("      Serial: %s\n", device.Serial)
-				}
-				if device.IDVendor != "" {
-					content += fmt.Sprintf("      Vendor ID: %s\n", device.IDVendor)
-				}
-				if device.IDProduct != "" {
-					content += fmt.Sprintf("      Product ID: %s\n", device.IDProduct)
-				}
-				if device.Version != "" {
-					content += fmt.Sprintf("      USB Version: %s\n", device.Version)
-				}
-				if device.Speed != "" {
-					content += fmt.Sprintf("      Speed: %s Mb/s\n", device.Speed)
-				}
+				content += renderUSBDeviceDetails(device, "    ")
 			}
 		}
 	}
