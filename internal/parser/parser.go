@@ -94,7 +94,7 @@ func parsePartner(partnerDir string) (*model.Partner, error) {
 	parsePDDirectories(partner, partnerDir)
 
 	// Try to find and parse USB device information
-	parseUSBDeviceInfo(partner, partnerDir)
+	partner.USBDevices = parseUSBDeviceInfo(partnerDir)
 
 	return partner, nil
 }

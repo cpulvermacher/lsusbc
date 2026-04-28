@@ -8,16 +8,17 @@ import (
 	"github.com/cpulvermacher/lsusbc/internal/model"
 )
 
-// USB Devices
-//
 // parseUSBDeviceInfo attempts to find and parse USB device information
 // by looking for device symlinks (like "1-4", "2-1") in the partner directory
 // Note that depending on hardware, these might just not exist
-func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
-	// Scan the partner directory for entries matching USB device patterns
+func parseUSBDeviceInfo(partnerDir string) []model.USBDevice {
+	return parseUSBDeviceInfoFrom(partnerDir, "/sys/bus/usb/devices")
+}
+
+func parseUSBDeviceInfoFrom(partnerDir string, usbDevicesDir string) []model.USBDevice {
 	entries, err := os.ReadDir(partnerDir)
 	if err != nil {
-		return
+		return nil
 	}
 
 	var devices []model.USBDevice
@@ -37,20 +38,14 @@ func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
 			continue
 		}
 
-		// Found a potential USB device link
-		// Resolve the device path
-		// resolve symlink to get actual path, then map to /sys/bus/usb/devices
-		devicePath := filepath.Join("/sys/bus/usb/devices", name)
-		// Check if the device path exists
+		devicePath := filepath.Join(usbDevicesDir, name)
 		if _, err := os.Stat(devicePath); err != nil {
 			continue
 		}
 
-		// Parse device information
 		manufacturer := readFile(filepath.Join(devicePath, "manufacturer"))
 		product := readFile(filepath.Join(devicePath, "product"))
 
-		// Only add if we have some useful information
 		if manufacturer != "" || product != "" {
 			devices = append(devices, model.USBDevice{
 				DeviceID:     name,
@@ -65,5 +60,5 @@ func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
 		}
 	}
 
-	partner.USBDevices = devices
+	return devices
 }
