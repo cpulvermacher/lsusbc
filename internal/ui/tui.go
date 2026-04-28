@@ -309,7 +309,7 @@ func renderPortDetails(port model.Port) string {
 
 		// Source capabilities
 		if len(partner.SourceCapabilities) > 0 {
-			content += fmt.Sprintf("  Source Capabilities:  %dW\n", model.MaxWatts(partner.SourceCapabilities))
+			content += fmt.Sprintf("  Charger Capabilities:  %dW\n", model.MaxWatts(partner.SourceCapabilities))
 			for i, cap := range partner.SourceCapabilities {
 				content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
 			}
