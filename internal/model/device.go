@@ -46,6 +46,8 @@ type USBDevice struct {
 	IDProduct    string
 	Speed        string // Speed in Mb/s (e.g., "480", "5000")
 	Version      string // USB version (e.g., "2.10", "3.20")
+	// USB devices connected through this hub
+	USBDevices []USBDevice
 }
 
 type PowerCapability struct {
