@@ -12,6 +12,7 @@ import (
 //
 // parseUSBDeviceInfo attempts to find and parse USB device information
 // by looking for device symlinks (like "1-4", "2-1") in the partner directory
+// Note that depending on hardware, these might just not exist
 func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
 	// Scan the partner directory for entries matching USB device patterns
 	entries, err := os.ReadDir(partnerDir)
@@ -38,28 +39,8 @@ func parseUSBDeviceInfo(partner *model.Partner, partnerDir string) {
 
 		// Found a potential USB device link
 		// Resolve the device path
-		var devicePath string
-		if strings.HasPrefix(partnerDir, "/sys/class/typec") {
-			// Live system: resolve symlink to get actual path, then map to /sys/bus/usb/devices
-			devicePath = filepath.Join("/sys/bus/usb/devices", name)
-		} else {
-			// Snapshot: the device directory should be captured in the snapshot
-			// Look for it in the snapshot's usb/devices directory
-			parts := strings.Split(partnerDir, string(filepath.Separator))
-			var snapshotRoot string
-			for i := len(parts) - 1; i >= 0; i-- {
-				if !strings.HasPrefix(parts[i], "port") {
-					snapshotRoot = filepath.Join(parts[:i+1]...)
-					break
-				}
-			}
-			if snapshotRoot != "" {
-				devicePath = filepath.Join(snapshotRoot, "usb", "devices", name)
-			} else {
-				continue
-			}
-		}
-
+		// resolve symlink to get actual path, then map to /sys/bus/usb/devices
+		devicePath := filepath.Join("/sys/bus/usb/devices", name)
 		// Check if the device path exists
 		if _, err := os.Stat(devicePath); err != nil {
 			continue
