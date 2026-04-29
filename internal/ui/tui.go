@@ -337,7 +337,9 @@ func renderPortDetails(port model.Port) string {
 		if partner.ACPowered {
 			content += "  Power Source: AC Powered\n"
 		}
-		content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
+		if partner.AccessoryMode != "none" {
+			content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
+		}
 
 		// Source capabilities
 		if len(partner.SourceCapabilities) > 0 {
