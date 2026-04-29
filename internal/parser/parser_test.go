@@ -343,6 +343,9 @@ func TestLoadPorts_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if ports == nil {
+		t.Error("got nil slice, want non-nil empty slice")
+	}
 	if len(ports) != 0 {
 		t.Errorf("got %d ports, want 0", len(ports))
 	}

@@ -18,7 +18,7 @@ func LoadPorts(path string) ([]model.Port, error) {
 		return nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
-	var ports []model.Port
+	ports := []model.Port{}
 	for _, entry := range entries {
 		// Check if it's a port directory/symlink (port0, port1, etc. but not port0-partner)
 		if strings.HasPrefix(entry.Name(), "port") && !strings.Contains(entry.Name(), "-") {
