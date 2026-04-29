@@ -133,6 +133,9 @@ func refresh(m UIModel) UIModel {
 	}
 
 	m.ports = ports
+	if m.selectedPort >= len(ports) {
+		m.selectedPort = max(0, len(ports)-1)
+	}
 	return m
 }
 
