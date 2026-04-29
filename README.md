@@ -37,6 +37,11 @@ Arrow direction indicates power flow:
 - `---󱐋--->` Port provides power to device
 - `<--󱐋---` Port receives power from device
 
+## Limitations
+
+- Amount of information available depends on hardware and kernel version.
+- It's possible for the /sys/class/typec information to get stuck. `rmmod ucsi_acpi; modprobe ucsi_acpi` may help, or a reboot may be required.
+
 # alternatives
 
 - Cyme (but more for other USB devices) https://github.com/tuna-f1sh/cyme?tab=readme-ov-file
