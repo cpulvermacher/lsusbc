@@ -1,3 +1,4 @@
+// Package model defines data structures representing USB-C ports and connected devices.
 package model
 
 import "fmt"
@@ -18,15 +19,18 @@ type Cable struct {
 }
 
 type Partner struct {
-	Name               string // e.g. "port0-partner"
-	PDRevision         string
+	Name           string // e.g. "port0-partner"
+	PowerDelivery  *PowerDelivery
+	AlternateModes []AlternateMode
+	AccessoryMode  string
+	USBDevices     []USBDevice // USB devices connected through this partner (from symlinks in partner directory)
+}
+
+type PowerDelivery struct {
+	Revision           string
 	ACPowered          bool // unconstrained_power bit: source is externally (AC) powered (false: battery-powered or not set)
 	SourceCapabilities []PowerCapability
 	SinkCapabilities   []PowerCapability
-	AlternateModes     []AlternateMode
-	AccessoryMode      string
-	// USB devices connected through this partner (from symlinks in partner directory)
-	USBDevices []USBDevice
 }
 
 type AlternateMode struct {
@@ -44,10 +48,9 @@ type USBDevice struct {
 	Serial       string
 	IDVendor     string
 	IDProduct    string
-	Speed        string // Speed in Mb/s (e.g., "480", "5000")
-	Version      string // USB version (e.g., "2.10", "3.20")
-	// USB devices connected through this hub
-	USBDevices []USBDevice
+	Speed        string      // Speed in Mb/s (e.g., "480", "5000")
+	Version      string      // USB version (e.g., "2.10", "3.20")
+	USBDevices   []USBDevice // USB devices connected through this hub
 }
 
 type PowerCapability struct {

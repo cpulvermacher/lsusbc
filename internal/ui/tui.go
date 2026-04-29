@@ -249,14 +249,16 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 		return powerMode3000mA.Render("[3A]")
 	case "usb_power_delivery":
 		label := "PD"
-		if partner.PDRevision != "" && partner.PDRevision != "0.0" {
-			label = "PD " + partner.PDRevision
-		}
-		if watts := model.MaxWatts(partner.SourceCapabilities); watts > 0 {
-			label = fmt.Sprintf("%s, %dW", label, watts)
-		}
-		if partner.ACPowered {
-			label += ", AC"
+		if pd := partner.PowerDelivery; pd != nil {
+			if pd.Revision != "" && pd.Revision != "0.0" {
+				label = "PD " + pd.Revision
+			}
+			if watts := model.MaxWatts(pd.SourceCapabilities); watts > 0 {
+				label = fmt.Sprintf("%s, %dW", label, watts)
+			}
+			if pd.ACPowered {
+				label += ", AC"
+			}
 		}
 		return powerModePd.Render("[" + label + "]")
 	default:
@@ -333,30 +335,32 @@ func renderPortDetails(port model.Port) string {
 	} else {
 		partner := port.Partner
 		content += fmt.Sprintf("Connected Device: %s\n", partner.Name)
-		content += fmt.Sprintf("  PD Revision: %s\n", partner.PDRevision)
-		if partner.ACPowered {
-			content += "  Power Source: AC Powered\n"
+		if pd := partner.PowerDelivery; pd != nil {
+			content += fmt.Sprintf("  PD Revision: %s\n", pd.Revision)
+			if pd.ACPowered {
+				content += "  Power Source: AC Powered\n"
+			}
+
+			// Source capabilities
+			if len(pd.SourceCapabilities) > 0 {
+				content += fmt.Sprintf("  Charger Capabilities:  %dW\n", model.MaxWatts(pd.SourceCapabilities))
+				for i, cap := range pd.SourceCapabilities {
+					content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
+				}
+				content += "\n"
+			}
+
+			// Sink capabilities
+			if len(pd.SinkCapabilities) > 0 {
+				content += "  Sink Capabilities:\n"
+				for i, cap := range pd.SinkCapabilities {
+					content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
+				}
+				content += "\n"
+			}
 		}
 		if partner.AccessoryMode != "none" {
 			content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
-		}
-
-		// Source capabilities
-		if len(partner.SourceCapabilities) > 0 {
-			content += fmt.Sprintf("  Charger Capabilities:  %dW\n", model.MaxWatts(partner.SourceCapabilities))
-			for i, cap := range partner.SourceCapabilities {
-				content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
-			}
-			content += "\n"
-		}
-
-		// Sink capabilities
-		if len(partner.SinkCapabilities) > 0 {
-			content += "  Sink Capabilities:\n"
-			for i, cap := range partner.SinkCapabilities {
-				content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
-			}
-			content += "\n"
 		}
 
 		// Alternate modes

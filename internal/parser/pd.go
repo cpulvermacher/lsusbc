@@ -12,12 +12,14 @@ import (
 // Power-delivery related bits
 
 // parsePDDirectories scans for and parses all PD directories (pd0, pd1, pd2, etc.)
-func parsePDDirectories(partner *model.Partner, partnerDir string) {
+// Returns nil if no PD directories are found.
+func parsePDDirectories(partnerDir string) *model.PowerDelivery {
 	entries, err := os.ReadDir(partnerDir)
 	if err != nil {
-		return
+		return nil
 	}
 
+	var pd *model.PowerDelivery
 	for _, entry := range entries {
 		name := entry.Name()
 
@@ -32,28 +34,33 @@ func parsePDDirectories(partner *model.Partner, partnerDir string) {
 			continue
 		}
 
+		if pd == nil {
+			pd = &model.PowerDelivery{}
+		}
+
 		pdDir := filepath.Join(partnerDir, name)
 
 		// Parse PD revision (use first one found if not already set)
-		if partner.PDRevision == "" {
-			partner.PDRevision = readFile(filepath.Join(pdDir, "revision"))
+		if pd.Revision == "" {
+			pd.Revision = readFile(filepath.Join(pdDir, "revision"))
 		}
 
 		// Parse source capabilities
 		sourceCapsDir := filepath.Join(pdDir, "source-capabilities")
 		if caps, err := parseCapabilities(sourceCapsDir); err == nil {
-			partner.SourceCapabilities = append(partner.SourceCapabilities, caps...)
+			pd.SourceCapabilities = append(pd.SourceCapabilities, caps...)
 		}
 		if readFile(filepath.Join(sourceCapsDir, "1:fixed_supply", "unconstrained_power")) == "1" {
-			partner.ACPowered = true
+			pd.ACPowered = true
 		}
 
 		// Parse sink capabilities
 		sinkCapsDir := filepath.Join(pdDir, "sink-capabilities")
 		if caps, err := parseCapabilities(sinkCapsDir); err == nil {
-			partner.SinkCapabilities = append(partner.SinkCapabilities, caps...)
+			pd.SinkCapabilities = append(pd.SinkCapabilities, caps...)
 		}
 	}
+	return pd
 }
 
 // parseCapabilities parses PD capabilities from a directory

@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/cpulvermacher/lsusbc/internal/model"
 )
 
 func makeCapDir(t *testing.T, capsDir, name string, files map[string]string) {
@@ -209,32 +207,36 @@ func TestParsePDDirectories_Basic(t *testing.T) {
 		"sink-capabilities/1:fixed_supply/maximum_current":   "3000mA\n",
 	})
 
-	partner := &model.Partner{}
-	parsePDDirectories(partner, partnerDir)
+	pd := parsePDDirectories(partnerDir)
 
-	if partner.PDRevision != "3.0" {
-		t.Errorf("PDRevision = %q, want %q", partner.PDRevision, "3.0")
+	if pd == nil {
+		t.Fatal("got nil, want PowerDelivery")
 	}
-	if len(partner.SourceCapabilities) != 1 {
-		t.Errorf("got %d source caps, want 1", len(partner.SourceCapabilities))
+	if pd.Revision != "3.0" {
+		t.Errorf("Revision = %q, want %q", pd.Revision, "3.0")
 	}
-	if len(partner.SinkCapabilities) != 1 {
-		t.Errorf("got %d sink caps, want 1", len(partner.SinkCapabilities))
+	if len(pd.SourceCapabilities) != 1 {
+		t.Errorf("got %d source caps, want 1", len(pd.SourceCapabilities))
+	}
+	if len(pd.SinkCapabilities) != 1 {
+		t.Errorf("got %d sink caps, want 1", len(pd.SinkCapabilities))
 	}
 }
 
 func TestParsePDDirectories_ACPowered(t *testing.T) {
 	partnerDir := t.TempDir()
 	makePDDir(t, partnerDir, "pd0", map[string]string{
-		"source-capabilities/1:fixed_supply/voltage":            "20000mV\n",
-		"source-capabilities/1:fixed_supply/maximum_current":    "5000mA\n",
+		"source-capabilities/1:fixed_supply/voltage":             "20000mV\n",
+		"source-capabilities/1:fixed_supply/maximum_current":     "5000mA\n",
 		"source-capabilities/1:fixed_supply/unconstrained_power": "1\n",
 	})
 
-	partner := &model.Partner{}
-	parsePDDirectories(partner, partnerDir)
+	pd := parsePDDirectories(partnerDir)
 
-	if !partner.ACPowered {
+	if pd == nil {
+		t.Fatal("got nil, want PowerDelivery")
+	}
+	if !pd.ACPowered {
 		t.Error("ACPowered = false, want true")
 	}
 }
@@ -242,22 +244,23 @@ func TestParsePDDirectories_ACPowered(t *testing.T) {
 func TestParsePDDirectories_NotACPowered(t *testing.T) {
 	partnerDir := t.TempDir()
 	makePDDir(t, partnerDir, "pd0", map[string]string{
-		"source-capabilities/1:fixed_supply/voltage":            "5000mV\n",
-		"source-capabilities/1:fixed_supply/maximum_current":    "3000mA\n",
+		"source-capabilities/1:fixed_supply/voltage":             "5000mV\n",
+		"source-capabilities/1:fixed_supply/maximum_current":     "3000mA\n",
 		"source-capabilities/1:fixed_supply/unconstrained_power": "0\n",
 	})
 
-	partner := &model.Partner{}
-	parsePDDirectories(partner, partnerDir)
+	pd := parsePDDirectories(partnerDir)
 
-	if partner.ACPowered {
+	if pd == nil {
+		t.Fatal("got nil, want PowerDelivery")
+	}
+	if pd.ACPowered {
 		t.Error("ACPowered = true, want false")
 	}
 }
 
 func TestParsePDDirectories_MultiplePDDirs(t *testing.T) {
 	partnerDir := t.TempDir()
-	// pd0 sets revision; pd1 adds more capabilities
 	makePDDir(t, partnerDir, "pd0", map[string]string{
 		"revision": "2.0\n",
 		"source-capabilities/1:fixed_supply/voltage":         "5000mV\n",
@@ -269,42 +272,39 @@ func TestParsePDDirectories_MultiplePDDirs(t *testing.T) {
 		"source-capabilities/1:fixed_supply/maximum_current": "5000mA\n",
 	})
 
-	partner := &model.Partner{}
-	parsePDDirectories(partner, partnerDir)
+	pd := parsePDDirectories(partnerDir)
 
-	// PDRevision should be from the first pd dir found
-	if partner.PDRevision == "" {
-		t.Error("PDRevision should be set")
+	if pd == nil {
+		t.Fatal("got nil, want PowerDelivery")
 	}
-	if len(partner.SourceCapabilities) != 2 {
-		t.Errorf("got %d source caps, want 2 (one per pd dir)", len(partner.SourceCapabilities))
+	if pd.Revision == "" {
+		t.Error("Revision should be set")
+	}
+	if len(pd.SourceCapabilities) != 2 {
+		t.Errorf("got %d source caps, want 2 (one per pd dir)", len(pd.SourceCapabilities))
 	}
 }
 
 func TestParsePDDirectories_SkipsNonPDDirs(t *testing.T) {
 	partnerDir := t.TempDir()
-	// These should not be parsed
 	for _, name := range []string{"mode0", "port0-partner", "pdX"} {
 		if err := os.MkdirAll(filepath.Join(partnerDir, name), 0755); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	partner := &model.Partner{}
-	parsePDDirectories(partner, partnerDir)
+	pd := parsePDDirectories(partnerDir)
 
-	if partner.PDRevision != "" || len(partner.SourceCapabilities) != 0 || len(partner.SinkCapabilities) != 0 {
-		t.Error("non-pd directories should not be parsed")
+	if pd != nil {
+		t.Error("expected nil for directory with no pd dirs, got non-nil")
 	}
 }
 
 func TestParsePDDirectories_MissingDir(t *testing.T) {
-	partner := &model.Partner{}
-	// Should not panic on missing directory
-	parsePDDirectories(partner, "/nonexistent/path")
+	pd := parsePDDirectories("/nonexistent/path")
 
-	if partner.PDRevision != "" {
-		t.Errorf("PDRevision = %q, want empty", partner.PDRevision)
+	if pd != nil {
+		t.Error("expected nil for missing directory, got non-nil")
 	}
 }
 
@@ -317,11 +317,12 @@ func TestParsePDDirectories_PDRevisionUsesFirst(t *testing.T) {
 		"revision": "3.0\n",
 	})
 
-	partner := &model.Partner{}
-	parsePDDirectories(partner, partnerDir)
+	pd := parsePDDirectories(partnerDir)
 
-	// Once set from pd0, should not be overwritten by pd1
-	if partner.PDRevision == "" {
-		t.Error("PDRevision should be set")
+	if pd == nil {
+		t.Fatal("got nil, want PowerDelivery")
+	}
+	if pd.Revision == "" {
+		t.Error("Revision should be set")
 	}
 }

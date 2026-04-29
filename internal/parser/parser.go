@@ -91,7 +91,7 @@ func parsePartner(partnerDir string) (*model.Partner, error) {
 	partner.AlternateModes = parseAlternateModes(partnerDir)
 
 	// Parse PD information from all pdX directories
-	parsePDDirectories(partner, partnerDir)
+	partner.PowerDelivery = parsePDDirectories(partnerDir)
 
 	// Try to find and parse USB device information
 	partner.USBDevices = parseUSBDeviceInfo(partnerDir)
