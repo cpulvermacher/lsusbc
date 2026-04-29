@@ -336,9 +336,10 @@ func TestParsePort_WithCable(t *testing.T) {
 // --- LoadPorts ---
 
 func TestLoadPorts_Empty(t *testing.T) {
-	typecDir := t.TempDir()
+	sysRoot := t.TempDir()
+	makeDir(t, sysRoot, "class/typec")
 
-	ports, err := LoadPorts(typecDir)
+	ports, err := LoadPorts(sysRoot)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -352,13 +353,14 @@ func TestLoadPorts_Empty(t *testing.T) {
 }
 
 func TestLoadPorts_OnePort(t *testing.T) {
-	typecDir := t.TempDir()
+	sysRoot := t.TempDir()
+	typecDir := makeDir(t, sysRoot, "class/typec")
 	portDir := makeDir(t, typecDir, "port0")
 	makeFile(t, portDir, "data_role", "[host] device\n")
 	makeFile(t, portDir, "power_role", "[source] sink\n")
 	makeFile(t, portDir, "power_operation_mode", "default\n")
 
-	ports, err := LoadPorts(typecDir)
+	ports, err := LoadPorts(sysRoot)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -372,7 +374,8 @@ func TestLoadPorts_OnePort(t *testing.T) {
 }
 
 func TestLoadPorts_MultiplePorts(t *testing.T) {
-	typecDir := t.TempDir()
+	sysRoot := t.TempDir()
+	typecDir := makeDir(t, sysRoot, "class/typec")
 	for _, name := range []string{"port0", "port1", "port2"} {
 		d := makeDir(t, typecDir, name)
 		makeFile(t, d, "data_role", "[host] device\n")
@@ -380,7 +383,7 @@ func TestLoadPorts_MultiplePorts(t *testing.T) {
 		makeFile(t, d, "power_operation_mode", "default\n")
 	}
 
-	ports, err := LoadPorts(typecDir)
+	ports, err := LoadPorts(sysRoot)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -391,7 +394,8 @@ func TestLoadPorts_MultiplePorts(t *testing.T) {
 }
 
 func TestLoadPorts_SkipsSiblingDirs(t *testing.T) {
-	typecDir := t.TempDir()
+	sysRoot := t.TempDir()
+	typecDir := makeDir(t, sysRoot, "class/typec")
 	portDir := makeDir(t, typecDir, "port0")
 	makeFile(t, portDir, "data_role", "[host] device\n")
 	makeFile(t, portDir, "power_role", "[source] sink\n")
@@ -403,7 +407,7 @@ func TestLoadPorts_SkipsSiblingDirs(t *testing.T) {
 	makeDir(t, typecDir, "port0-plug0")
 	makeDir(t, typecDir, "usb2")
 
-	ports, err := LoadPorts(typecDir)
+	ports, err := LoadPorts(sysRoot)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

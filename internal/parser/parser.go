@@ -11,8 +11,9 @@ import (
 	"github.com/cpulvermacher/lsusbc/internal/model"
 )
 
-// LoadPorts loads all ports from a typec directory (live system or snapshot)
-func LoadPorts(path string) ([]model.Port, error) {
+// LoadPorts loads all ports from a sysfs directory (live system or snapshot)
+func LoadPorts(sysfsPath string) ([]model.Port, error) {
+	path := filepath.Join(sysfsPath, "class/typec")
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory: %w", err)

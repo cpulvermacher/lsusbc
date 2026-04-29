@@ -35,7 +35,7 @@ var (
 )
 
 type UIModel struct {
-	TypecDir string
+	SysfsDir string
 
 	ports          []model.Port
 	selectedPort   int
@@ -126,7 +126,7 @@ func (m UIModel) View() string {
 
 func refresh(m UIModel) UIModel {
 	// Load ports
-	ports, err := parser.LoadPorts(m.TypecDir)
+	ports, err := parser.LoadPorts(m.SysfsDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
 		os.Exit(1)

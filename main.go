@@ -10,33 +10,33 @@ import (
 )
 
 func main() {
-	typecDir := flag.String("d", "/sys/class/typec", "typec sysfs directory")
+	sysfsDir := flag.String("d", "/sys", "sysfs directory")
 	listFlag := flag.Bool("l", false, "list devices and exit")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
-		*typecDir = flag.Arg(0)
+		*sysfsDir = flag.Arg(0)
 	}
 
 	// Check if directory exists
-	if _, err := os.Stat(*typecDir); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Error: directory does not exist: %s\n", *typecDir)
+	if _, err := os.Stat(*sysfsDir); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Error: directory does not exist: %s\n", *sysfsDir)
 		os.Exit(1)
 	}
 
 	if *listFlag {
-		ui.ListPorts(*typecDir)
+		ui.ListPorts(*sysfsDir)
 		return
 	}
 
-	if _, err := tea.NewProgram(newModel(*typecDir), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(newModel(*sysfsDir), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
 }
 
-func newModel(typecDir string) ui.UIModel {
+func newModel(sysfsDir string) ui.UIModel {
 	return ui.UIModel{
-		TypecDir: typecDir,
+		SysfsDir: sysfsDir,
 	}
 }
