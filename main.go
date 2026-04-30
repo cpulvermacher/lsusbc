@@ -6,6 +6,7 @@ import (
 	"os"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/term"
 	"github.com/cpulvermacher/lsusbc/internal/ui"
 )
 
@@ -24,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *listFlag {
+	if *listFlag || !term.IsTerminal(os.Stdout.Fd()) {
 		ui.ListPorts(*sysfsDir)
 		return
 	}
