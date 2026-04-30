@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/cpulvermacher/lsusbc/internal/ui"
 )
 
@@ -29,7 +29,7 @@ func main() {
 		return
 	}
 
-	if _, err := tea.NewProgram(newModel(*sysfsDir), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(newModel(*sysfsDir)).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

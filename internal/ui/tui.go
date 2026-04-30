@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/tree"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/tree"
 
 	"github.com/cpulvermacher/lsusbc/internal/model"
 	"github.com/cpulvermacher/lsusbc/internal/parser"
@@ -114,12 +114,16 @@ func moveSelection(m UIModel, increment int) tea.Model {
 	return m
 }
 
-func (m UIModel) View() string {
+func (m UIModel) View() tea.View {
+	var view tea.View
+	view.AltScreen = true
+
 	if m.ports == nil {
-		return "Loading..."
-	}
-	if len(m.ports) == 0 {
-		return "No USB-C ports found"
+		view.SetContent("Loading...")
+		return view
+	} else if len(m.ports) == 0 {
+		view.SetContent("No USB-C ports found")
+		return view
 	}
 
 	// 1: port list
@@ -152,7 +156,8 @@ func (m UIModel) View() string {
 	bar := renderStatusBar(m)
 	lines = lipgloss.JoinVertical(lipgloss.Left, lines, bar)
 
-	return lines
+	view.SetContent(lines)
+	return view
 }
 
 func renderStatusBar(m UIModel) string {
