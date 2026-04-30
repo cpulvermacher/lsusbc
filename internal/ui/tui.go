@@ -24,7 +24,8 @@ var (
 	powerMode1500mA = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
 	powerModeUsb    = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
 
-	popupStyle = lipgloss.NewStyle().
+	portListStyle = lipgloss.NewStyle().Width(40)
+	detailsStyle  = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("#8e8e8e")).
 			Padding(1, 2).
@@ -121,29 +122,35 @@ func (m UIModel) View() string {
 		return "No USB-C ports found"
 	}
 
-	var lines string
+	// 1: port list
+	var ports string
 	for i, port := range m.ports {
-		lines += renderPort(port, i == m.selectedPort) + " "
+		ports += renderPort(port, i == m.selectedPort) + " "
 		if port.Partner == nil {
-			lines += fmt.Sprintf("%s\n", inactiveStyle.Render("(no device connected)"))
+			ports += fmt.Sprintf("%s\n", inactiveStyle.Render("(no device connected)"))
 		} else {
-			lines += renderConnection(port)
+			ports += renderConnection(port)
 		}
 	}
+	lines := portListStyle.Render(ports)
 
-	bar := renderStatusBar(m)
-	if m.termHeight > 0 {
-		lineCount := strings.Count(lines, "\n")
-		padding := m.termHeight - lineCount - 1
-		if padding > 0 {
-			lines += strings.Repeat("\n", padding)
-		}
-	}
-	lines += bar
-
+	// 2: details
 	if m.showingDetails && len(m.ports) > 0 {
-		return renderPopupOverlay(lines, m.ports[m.selectedPort])
+		details := renderPortDetails(m.ports[m.selectedPort])
+		instruction := helpText.Render("\nPress Escape or q to close")
+		popup := detailsStyle.Render(details + instruction)
+
+		lines = lipgloss.JoinHorizontal(lipgloss.Top, lines, popup)
 	}
+
+	// set fixed height for 1+2
+	if m.termHeight > 1 {
+		lines = lipgloss.NewStyle().Width(m.termWidth).Height(m.termHeight - 1).Render(lines)
+	}
+
+	// 3: status bar
+	bar := renderStatusBar(m)
+	lines = lipgloss.JoinVertical(lipgloss.Left, lines, bar)
 
 	return lines
 }
@@ -462,15 +469,4 @@ func ListPorts(typecDir string) {
 		fmt.Print(renderPortDetails(port))
 		fmt.Println()
 	}
-}
-
-// renderPopupOverlay renders the port details as a popup overlay
-func renderPopupOverlay(background string, port model.Port) string {
-	details := renderPortDetails(port)
-
-	instruction := helpText.Render("\nPress Escape or q to close")
-
-	popup := popupStyle.Render(details + instruction)
-
-	return lipgloss.JoinHorizontal(lipgloss.Top, background, popup)
 }
