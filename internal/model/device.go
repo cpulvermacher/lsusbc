@@ -53,6 +53,13 @@ type USBDevice struct {
 	USBDevices   []USBDevice // USB devices connected through this hub
 }
 
+// BatteryInfo holds battery charge information
+type BatteryInfo struct {
+	Capacity      int    // Battery level in percent
+	CapacityLevel string // Unknown, Critical, Low, Normal, High, Full
+	Status        string // Charging, Discharging, Full, Not charging, Unknown
+}
+
 type PowerCapability struct {
 	Voltage        int // in mV (fixed supply)
 	MaximumCurrent int // in mA

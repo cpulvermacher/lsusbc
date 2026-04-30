@@ -31,7 +31,15 @@ var (
 			MarginLeft(10).
 			Width(70)
 
-	helpText = lipgloss.NewStyle().Foreground(lipgloss.Color("#6e6e6e"))
+	helpText  = lipgloss.NewStyle().Foreground(lipgloss.Color("#6e6e6e"))
+	statusBar = lipgloss.NewStyle().
+			Background(lipgloss.Color("#000000")).
+			Foreground(lipgloss.Color("#9e9e9e"))
+
+	batteryCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
+	batteryNormal   = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
+	batteryLow      = lipgloss.NewStyle().Foreground(lipgloss.Color("#fec400"))
+	batteryCritical = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe8000"))
 )
 
 type UIModel struct {
@@ -40,6 +48,9 @@ type UIModel struct {
 	ports          []model.Port
 	selectedPort   int
 	showingDetails bool
+	battery        *model.BatteryInfo
+	termWidth      int
+	termHeight     int
 }
 
 type RefreshTick time.Time
@@ -55,10 +66,6 @@ func (m UIModel) Init() tea.Cmd {
 }
 
 func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if m.ports == nil {
-		return refresh(m), doTick()
-	}
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -84,6 +91,13 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case RefreshTick:
 		return refresh(m), doTick()
 
+	case tea.WindowSizeMsg:
+		m.termWidth = msg.Width
+		m.termHeight = msg.Height
+	}
+
+	if m.ports == nil {
+		return refresh(m), doTick()
 	}
 
 	return m, nil
@@ -117,6 +131,16 @@ func (m UIModel) View() string {
 		}
 	}
 
+	bar := renderStatusBar(m)
+	if m.termHeight > 0 {
+		lineCount := strings.Count(lines, "\n")
+		padding := m.termHeight - lineCount - 1
+		if padding > 0 {
+			lines += strings.Repeat("\n", padding)
+		}
+	}
+	lines += bar
+
 	if m.showingDetails && len(m.ports) > 0 {
 		return renderPopupOverlay(lines, m.ports[m.selectedPort])
 	}
@@ -124,8 +148,43 @@ func (m UIModel) View() string {
 	return lines
 }
 
+func renderStatusBar(m UIModel) string {
+	var parts []string
+
+	if m.battery != nil && m.battery.CapacityLevel != "" && m.battery.CapacityLevel != "Unknown" {
+		bat := fmt.Sprintf("Battery: %d%%", m.battery.Capacity)
+		switch m.battery.Status {
+		case "Discharging":
+			switch m.battery.CapacityLevel {
+			case "Normal":
+				bat = batteryNormal.Render(bat)
+			case "Low":
+				bat = batteryLow.Render(bat)
+			case "Critical":
+				bat = batteryCritical.Render(bat)
+			}
+		case "Unknown":
+			break // no formatting
+		default:
+			bat = batteryCharging.Render(bat)
+		}
+		parts = append(parts, bat)
+	}
+
+	if m.SysfsDir != "/sys" {
+		parts = append(parts, "sysfs: "+m.SysfsDir)
+	}
+
+	text := strings.Join(parts, "  |  ")
+	if m.termWidth > 0 {
+		text = statusBar.Width(m.termWidth).Render(text)
+	} else {
+		text = statusBar.Render(text)
+	}
+	return text
+}
+
 func refresh(m UIModel) UIModel {
-	// Load ports
 	ports, err := parser.LoadPorts(m.SysfsDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
@@ -136,6 +195,7 @@ func refresh(m UIModel) UIModel {
 	if m.selectedPort >= len(ports) {
 		m.selectedPort = max(0, len(ports)-1)
 	}
+	m.battery = parser.LoadBatteryInfo(m.SysfsDir)
 	return m
 }
 
