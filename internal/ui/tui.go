@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	inactive           = lipgloss.NewStyle().Foreground(lipgloss.Color("#4e4e4e"))
-	selectedPort       = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#2f2f2f"))
+	inactiveStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#4e4e4e"))
+	selectedStyle      = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#2f2f2f"))
 	powerArrowCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#aad700"))
 
 	powerModePd     = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
@@ -111,7 +111,7 @@ func (m UIModel) View() string {
 	for i, port := range m.ports {
 		lines += renderPort(port, i == m.selectedPort) + " "
 		if port.Partner == nil {
-			lines += fmt.Sprintf("%s\n", inactive.Render("(no device connected)"))
+			lines += fmt.Sprintf("%s\n", inactiveStyle.Render("(no device connected)"))
 		} else {
 			lines += renderConnection(port)
 		}
@@ -154,7 +154,7 @@ func renderPort(port model.Port, selected bool) string {
 	if !selected {
 		return " " + label
 	} else {
-		return ">" + selectedPort.Render(label)
+		return ">" + selectedStyle.Render(label)
 	}
 }
 
@@ -174,7 +174,7 @@ func renderConnection(port model.Port) string {
 
 	devices := port.Partner.USBDevices
 	if len(devices) == 0 {
-		deviceName := getFriendlyDeviceName(&port, port.Partner)
+		deviceName := getFriendlyDeviceName(port.Partner)
 		return fmt.Sprintf("%s %s  %s\n", arrow, deviceName, capabilities)
 	} else if len(devices) == 1 && len(devices[0].USBDevices) == 0 {
 		return fmt.Sprintf("%s %s  %s\n", arrow, formatUSBDevice(devices[0]), capabilities)
@@ -211,7 +211,7 @@ func usbDeviceTree(device model.USBDevice) *tree.Tree {
 }
 
 // getFriendlyDeviceName generates a friendly device description when USB device info is not available
-func getFriendlyDeviceName(port *model.Port, partner *model.Partner) string {
+func getFriendlyDeviceName(partner *model.Partner) string {
 	// Priority 1: Alternate mode description(s)
 	if len(partner.AlternateModes) > 0 {
 		// concatenate them
@@ -334,7 +334,7 @@ func renderPortDetails(port model.Port) string {
 
 	// Partner info
 	if port.Partner == nil {
-		content += fmt.Sprintf("Connected Device: %s\n", inactive.Render("(no device connected)"))
+		content += fmt.Sprintf("Connected Device: %s\n", inactiveStyle.Render("(no device connected)"))
 	} else {
 		partner := port.Partner
 		content += fmt.Sprintf("Connected Device: %s\n", partner.Name)
