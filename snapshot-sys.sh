@@ -101,3 +101,6 @@ for entry in /sys/class/typec/*; do
 done
 
 echo "Done. Snapshot written to: $DEST" >&2
+echo ""
+echo "For submitting bug reports, create a compressed tarball using:"
+echo "  tar czvf $DEST.tar.gz $DEST"
