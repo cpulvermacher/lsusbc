@@ -20,11 +20,6 @@ var (
 	selectedStyle      = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#2f2f2f"))
 	powerArrowCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#aad700"))
 
-	powerModePd          = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
-	powerModeCurrent3A   = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
-	powerModeCurrent1_5A = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
-	powerModeUsb         = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
-
 	portListStyle = lipgloss.NewStyle().Width(40)
 	detailsStyle  = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -233,7 +228,7 @@ func renderPort(port model.Port, selected bool) string {
 
 // renderConnection renders a port-partner connection
 func renderConnection(port model.Port) string {
-	capabilities := formatCapabilities(port.Partner, port.PowerOperationMode)
+	capabilities := formatCapabilities(port.Partner.PowerDelivery, port.PowerOperationMode)
 
 	// Arrow direction based on power flow
 	// If port is sink, it receives power (arrow points toward port)
@@ -311,35 +306,6 @@ func getFriendlyDeviceName(partner *model.Partner) string {
 
 	// Fallback
 	return "USB Device"
-}
-
-// formatCapabilities formats power capabilities based on power operation mode
-func formatCapabilities(partner *model.Partner, powerOperationMode string) string {
-	// Use power_operation_mode to decide what to show
-	switch powerOperationMode {
-	case "default":
-		return powerModeUsb.Render("[≤5W]")
-	case "1.5A":
-		return powerModeCurrent1_5A.Render("[7.5W]")
-	case "3.0A":
-		return powerModeCurrent3A.Render("[15W]")
-	case "usb_power_delivery":
-		label := "PD"
-		if pd := partner.PowerDelivery; pd != nil {
-			if pd.Revision != "" && pd.Revision != "0.0" {
-				label = "PD " + pd.Revision
-			}
-			if watts := MaxWatts(pd.SourceCapabilities); watts > 0 {
-				label = fmt.Sprintf("%s, %dW", label, watts)
-			}
-			if pd.ACPowered {
-				label += ", AC"
-			}
-		}
-		return powerModePd.Render("[" + label + "]")
-	default:
-		return ""
-	}
 }
 
 func renderUSBDeviceDetails(device model.USBDevice, indent string) string {

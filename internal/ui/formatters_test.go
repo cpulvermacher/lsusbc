@@ -1,10 +1,17 @@
 package ui
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/cpulvermacher/lsusbc/internal/model"
 )
+
+var ansiEscape = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(s string) string {
+	return ansiEscape.ReplaceAllString(s, "")
+}
 
 func TestFormatVoltage_Fixed(t *testing.T) {
 	tests := []struct {
@@ -100,5 +107,70 @@ func TestMaxWatts(t *testing.T) {
 func TestMaxWatts_Empty(t *testing.T) {
 	if got := MaxWatts(nil); got != 0 {
 		t.Errorf("MaxWatts(nil) = %d, want 0", got)
+	}
+}
+
+func TestFormatCapabilities_NonPD(t *testing.T) {
+	tests := []struct {
+		mode string
+		want string
+	}{
+		{"default", "[≤5W]"},
+		{"1.5A", "[7.5W]"},
+		{"3.0A", "[15W]"},
+		{"", ""},
+		{"unknown", ""},
+	}
+	for _, tt := range tests {
+		got := stripANSI(formatCapabilities(nil, tt.mode))
+		if got != tt.want {
+			t.Errorf("formatCapabilities(nil, %q) = %q, want %q", tt.mode, got, tt.want)
+		}
+	}
+}
+
+func TestFormatCapabilities_PD_NilPD(t *testing.T) {
+	got := stripANSI(formatCapabilities(nil, "usb_power_delivery"))
+	if got != "[PD]" {
+		t.Errorf("got %q, want %q", got, "[PD]")
+	}
+}
+
+func TestFormatCapabilities_PD_WithRevision(t *testing.T) {
+	pd := &model.PowerDelivery{Revision: "3.0"}
+	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	if got != "[PD 3.0]" {
+		t.Errorf("got %q, want %q", got, "[PD 3.0]")
+	}
+}
+
+func TestFormatCapabilities_PD_WithWatts(t *testing.T) {
+	pd := &model.PowerDelivery{
+		Revision:           "3.0",
+		SourceCapabilities: []model.PowerCapability{{Voltage: 20000, MaximumCurrent: 5000}},
+	}
+	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	if got != "[PD 3.0, 100W]" {
+		t.Errorf("got %q, want %q", got, "[PD 3.0, 100W]")
+	}
+}
+
+func TestFormatCapabilities_PD_ACPowered(t *testing.T) {
+	pd := &model.PowerDelivery{
+		Revision:           "3.0",
+		ACPowered:          true,
+		SourceCapabilities: []model.PowerCapability{{Voltage: 20000, MaximumCurrent: 5000}},
+	}
+	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	if got != "[PD 3.0, 100W, AC]" {
+		t.Errorf("got %q, want %q", got, "[PD 3.0, 100W, AC]")
+	}
+}
+
+func TestFormatCapabilities_PD_ZeroRevision(t *testing.T) {
+	pd := &model.PowerDelivery{Revision: "0.0"}
+	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	if got != "[PD]" {
+		t.Errorf("got %q, want %q", got, "[PD]")
 	}
 }
