@@ -20,10 +20,10 @@ var (
 	selectedStyle      = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#2f2f2f"))
 	powerArrowCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#aad700"))
 
-	powerModePd     = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
-	powerMode3000mA = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
-	powerMode1500mA = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
-	powerModeUsb    = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
+	powerModePd          = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
+	powerModeCurrent3A   = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
+	powerModeCurrent1_5A = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
+	powerModeUsb         = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
 
 	portListStyle = lipgloss.NewStyle().Width(40)
 	detailsStyle  = lipgloss.NewStyle().
@@ -318,11 +318,11 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 	// Use power_operation_mode to decide what to show
 	switch powerOperationMode {
 	case "default":
-		return powerModeUsb.Render("[USB]")
+		return powerModeUsb.Render("[≤5W]")
 	case "1.5A":
-		return powerMode1500mA.Render("[1.5A]")
+		return powerModeCurrent1_5A.Render("[7.5W]")
 	case "3.0A":
-		return powerMode3000mA.Render("[3A]")
+		return powerModeCurrent3A.Render("[15W]")
 	case "usb_power_delivery":
 		label := "PD"
 		if pd := partner.PowerDelivery; pd != nil {
