@@ -412,7 +412,7 @@ func renderPortDetails(port model.Port) string {
 		partner := port.Partner
 		content += fmt.Sprintf("Connected Device: %s\n", partner.Name)
 		if pd := partner.PowerDelivery; pd != nil {
-			content += fmt.Sprintf("  PD Revision: %s\n", pd.Revision)
+			content += fmt.Sprintf("  Power: USB Power Delivery %s\n", pd.Revision)
 			if pd.ACPowered {
 				content += "  Power Source: AC Powered\n"
 			}
@@ -433,6 +433,15 @@ func renderPortDetails(port model.Port) string {
 					content += fmt.Sprintf("    [%d] %s @ %s\n", i, FormatVoltage(cap), FormatCurrent(cap))
 				}
 				content += "\n"
+			}
+		} else {
+			switch port.PowerOperationMode {
+			case "default":
+				content += "  Power: Default USB Power (5V, ≤500mA/900mA, ≤2.5W/4.5W)\n\n"
+			case "1.5A":
+				content += "  Power: USB Type-C Current (5V @ 1.5A, 7.5W)\n\n"
+			case "3.0A":
+				content += "  Power: USB Type-C Current (5V @ 3A, 15W)\n\n"
 			}
 		}
 		if partner.AccessoryMode != "none" {
