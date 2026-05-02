@@ -328,7 +328,7 @@ func formatCapabilities(partner *model.Partner, powerOperationMode string) strin
 			if pd.Revision != "" && pd.Revision != "0.0" {
 				label = "PD " + pd.Revision
 			}
-			if watts := model.MaxWatts(pd.SourceCapabilities); watts > 0 {
+			if watts := MaxWatts(pd.SourceCapabilities); watts > 0 {
 				label = fmt.Sprintf("%s, %dW", label, watts)
 			}
 			if pd.ACPowered {
@@ -418,9 +418,9 @@ func renderPortDetails(port model.Port) string {
 
 			// Source capabilities
 			if len(pd.SourceCapabilities) > 0 {
-				content += fmt.Sprintf("  Charger Capabilities:  %dW\n", model.MaxWatts(pd.SourceCapabilities))
+				content += fmt.Sprintf("  Charger Capabilities:  %dW\n", MaxWatts(pd.SourceCapabilities))
 				for i, cap := range pd.SourceCapabilities {
-					content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
+					content += fmt.Sprintf("    [%d] %s @ %s\n", i, FormatVoltage(cap), FormatCurrent(cap))
 				}
 				content += "\n"
 			}
@@ -429,7 +429,7 @@ func renderPortDetails(port model.Port) string {
 			if len(pd.SinkCapabilities) > 0 {
 				content += "  Sink Capabilities:\n"
 				for i, cap := range pd.SinkCapabilities {
-					content += fmt.Sprintf("    [%d] %s @ %s\n", i, cap.FormatVoltage(), cap.FormatCurrent())
+					content += fmt.Sprintf("    [%d] %s @ %s\n", i, FormatVoltage(cap), FormatCurrent(cap))
 				}
 				content += "\n"
 			}
