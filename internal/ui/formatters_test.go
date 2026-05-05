@@ -187,22 +187,32 @@ func TestFormatAlternateMode(t *testing.T) {
 			want: "    [0] Thunderbolt (SVID: 8087, VDO: 0x0)\n",
 		},
 		{
-			name: "DP sink",
+			name: "DP sink, native DP + tunneling",
 			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x001c0c05", Active: "yes"},
-			want: "   *[0] DisplayPort sink (SVID: ff01, VDO: 0x001c0c05)\n",
+			want: "   *[0] DisplayPort sink, native DP + tunneling (SVID: ff01, VDO: 0x001c0c05)\n",
 		},
 		{
-			name: "DP source",
+			name: "DP source+sink, native DP + tunneling",
+			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x001c1c43", Active: "yes"},
+			want: "   *[0] DisplayPort source+sink, native DP + tunneling (SVID: ff01, VDO: 0x001c1c43)\n",
+		},
+		{
+			name: "DP sink, native DP only",
+			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x00100001", Active: "no"},
+			want: "    [0] DisplayPort sink, native DP (SVID: ff01, VDO: 0x00100001)\n",
+		},
+		{
+			name: "DP source, tunneling only",
+			mode: model.AlternateMode{Index: 1, Description: "DisplayPort", SVID: "ff01", VDO: "0x00000e02", Active: "no"},
+			want: "    [1] DisplayPort source, tunneling (SVID: ff01, VDO: 0x00000e02)\n",
+		},
+		{
+			name: "DP source, no pin info",
 			mode: model.AlternateMode{Index: 1, Description: "DisplayPort", SVID: "ff01", VDO: "0x00000002", Active: "no"},
 			want: "    [1] DisplayPort source (SVID: ff01, VDO: 0x00000002)\n",
 		},
 		{
-			name: "DP source+sink",
-			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x00000003", Active: "yes"},
-			want: "   *[0] DisplayPort source+sink (SVID: ff01, VDO: 0x00000003)\n",
-		},
-		{
-			name: "DP reserved bits",
+			name: "DP reserved capability bits",
 			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x0", Active: "no"},
 			want: "    [0] DisplayPort (SVID: ff01, VDO: 0x0)\n",
 		},

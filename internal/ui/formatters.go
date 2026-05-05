@@ -91,7 +91,7 @@ func formatAlternateMode(mode model.AlternateMode) string {
 	return fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, mode.SVID, mode.VDO)
 }
 
-// dpPortCapability parses bits 0..1 of a DisplayPort VDO to return "source", "sink", "source+sink", or "".
+// dpPortCapability parses a DisplayPort VDO to return a string like "sink, native DP" or "source+sink, tunneling".
 func dpPortCapability(mode model.AlternateMode) string {
 	if mode.SVID != "ff01" {
 		return ""
@@ -100,15 +100,43 @@ func dpPortCapability(mode model.AlternateMode) string {
 	if err != nil {
 		return ""
 	}
+
+	// Bits [1:0]: port capability
+	var portCap string
 	switch vdo & 0x3 {
 	case 0x1:
-		return "sink"
+		portCap = "sink"
 	case 0x2:
-		return "source"
+		portCap = "source"
 	case 0x3:
-		return "source+sink"
+		portCap = "source+sink"
 	default:
 		return ""
+	}
+
+	// Bits [15:8]: DFP_D pin assignments; bits [23:16]: UFP_D pin assignments.
+	// Union the sets relevant to this device's capability.
+	var pins uint64
+	if vdo&0x1 != 0 { // UFP_D capable
+		pins |= (vdo >> 16) & 0xFF
+	}
+	if vdo&0x2 != 0 { // DFP_D capable
+		pins |= (vdo >> 8) & 0xFF
+	}
+
+	// Bits 4-5 (E, F) = native DisplayPort; bits 0-3 (A-D) = tunneling/protocol converter.
+	hasNative := pins&0x30 != 0
+	hasTunnel := pins&0x0F != 0
+
+	switch {
+	case hasNative && hasTunnel:
+		return portCap + ", native DP + tunneling"
+	case hasNative:
+		return portCap + ", native DP"
+	case hasTunnel:
+		return portCap + ", tunneling"
+	default:
+		return portCap
 	}
 }
 
