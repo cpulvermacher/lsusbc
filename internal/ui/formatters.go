@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"charm.land/lipgloss/v2"
 	"github.com/cpulvermacher/lsusbc/internal/model"
@@ -71,6 +73,40 @@ func formatCapabilities(pd *model.PowerDelivery, powerOperationMode string) stri
 			}
 		}
 		return powerModePd.Render("[" + label + "]")
+	default:
+		return ""
+	}
+}
+
+// formatAlternateMode formats a single alternate mode entry for the details panel.
+func formatAlternateMode(mode model.AlternateMode) string {
+	marker := " "
+	if mode.Active == "yes" {
+		marker = "*"
+	}
+	extra := dpPortCapability(mode)
+	if extra != "" {
+		return fmt.Sprintf("   %s[%d] %s %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, extra, mode.SVID, mode.VDO)
+	}
+	return fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, mode.SVID, mode.VDO)
+}
+
+// dpPortCapability parses bits 0..1 of a DisplayPort VDO to return "source", "sink", "source+sink", or "".
+func dpPortCapability(mode model.AlternateMode) string {
+	if mode.SVID != "ff01" {
+		return ""
+	}
+	vdo, err := strconv.ParseUint(strings.TrimPrefix(mode.VDO, "0x"), 16, 32)
+	if err != nil {
+		return ""
+	}
+	switch vdo & 0x3 {
+	case 0x1:
+		return "sink"
+	case 0x2:
+		return "source"
+	case 0x3:
+		return "source+sink"
 	default:
 		return ""
 	}

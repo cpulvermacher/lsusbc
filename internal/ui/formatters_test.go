@@ -174,3 +174,45 @@ func TestFormatCapabilities_PD_ZeroRevision(t *testing.T) {
 		t.Errorf("got %q, want %q", got, "[PD]")
 	}
 }
+
+func TestFormatAlternateMode(t *testing.T) {
+	tests := []struct {
+		name string
+		mode model.AlternateMode
+		want string
+	}{
+		{
+			name: "non-DP mode",
+			mode: model.AlternateMode{Index: 0, Description: "Thunderbolt", SVID: "8087", VDO: "0x0", Active: "no"},
+			want: "    [0] Thunderbolt (SVID: 8087, VDO: 0x0)\n",
+		},
+		{
+			name: "DP sink",
+			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x001c0c05", Active: "yes"},
+			want: "   *[0] DisplayPort sink (SVID: ff01, VDO: 0x001c0c05)\n",
+		},
+		{
+			name: "DP source",
+			mode: model.AlternateMode{Index: 1, Description: "DisplayPort", SVID: "ff01", VDO: "0x00000002", Active: "no"},
+			want: "    [1] DisplayPort source (SVID: ff01, VDO: 0x00000002)\n",
+		},
+		{
+			name: "DP source+sink",
+			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x00000003", Active: "yes"},
+			want: "   *[0] DisplayPort source+sink (SVID: ff01, VDO: 0x00000003)\n",
+		},
+		{
+			name: "DP reserved bits",
+			mode: model.AlternateMode{Index: 0, Description: "DisplayPort", SVID: "ff01", VDO: "0x0", Active: "no"},
+			want: "    [0] DisplayPort (SVID: ff01, VDO: 0x0)\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := formatAlternateMode(tt.mode)
+			if got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

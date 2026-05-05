@@ -393,11 +393,7 @@ func renderPortDetails(port model.Port) string {
 		if len(cable.AlternateModes) > 0 {
 			content += "  Alternate Modes:\n"
 			for _, mode := range cable.AlternateModes {
-				marker := " "
-				if mode.Active == "yes" {
-					marker = "*"
-				}
-				content += fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, mode.SVID, mode.VDO)
+				content += formatAlternateMode(mode)
 			}
 		}
 		content += "\n"
@@ -450,11 +446,7 @@ func renderPortDetails(port model.Port) string {
 		if len(partner.AlternateModes) > 0 {
 			content += "  Alternate Modes:\n"
 			for _, mode := range partner.AlternateModes {
-				marker := " "
-				if mode.Active == "yes" {
-					marker = "*"
-				}
-				content += fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, mode.SVID, mode.VDO)
+				content += formatAlternateMode(mode)
 			}
 			content += "\n"
 		}

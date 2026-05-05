@@ -42,7 +42,7 @@ func TestParseAlternateModes_OneMode(t *testing.T) {
 	partnerDir := makeDir(t, t.TempDir(), "port0-partner")
 	altDir := makeDir(t, partnerDir, "port0-partner.0")
 	makeFile(t, altDir, "description", "DisplayPort\n")
-	makeFile(t, altDir, "svid", "0xff01\n")
+	makeFile(t, altDir, "svid", "ff01\n")
 	makeFile(t, altDir, "vdo", "0x001c0c05\n")
 	makeFile(t, altDir, "active", "yes\n")
 
@@ -58,8 +58,8 @@ func TestParseAlternateModes_OneMode(t *testing.T) {
 	if m.Description != "DisplayPort" {
 		t.Errorf("Description = %q, want %q", m.Description, "DisplayPort")
 	}
-	if m.SVID != "0xff01" {
-		t.Errorf("SVID = %q, want %q", m.SVID, "0xff01")
+	if m.SVID != "ff01" {
+		t.Errorf("SVID = %q, want %q", m.SVID, "ff01")
 	}
 	if m.Active != "yes" {
 		t.Errorf("Active = %q, want %q", m.Active, "yes")
@@ -150,7 +150,7 @@ func TestParseCable_WithPlugAlternateModes(t *testing.T) {
 	plugDir := makeDir(t, typecDir, "port0-plug0")
 	altDir := makeDir(t, plugDir, "port0-plug0.0")
 	makeFile(t, altDir, "description", "DisplayPort\n")
-	makeFile(t, altDir, "svid", "0xff01\n")
+	makeFile(t, altDir, "svid", "ff01\n")
 	makeFile(t, altDir, "vdo", "0x0\n")
 	makeFile(t, altDir, "active", "yes\n")
 
@@ -177,7 +177,7 @@ func TestParseCable_MultiplePlugs(t *testing.T) {
 		plugDir := makeDir(t, typecDir, plug)
 		altDir := makeDir(t, plugDir, plug+".0")
 		makeFile(t, altDir, "description", "Thunderbolt\n")
-		makeFile(t, altDir, "svid", "0x8087\n")
+		makeFile(t, altDir, "svid", "8087\n")
 		makeFile(t, altDir, "vdo", "0x0\n")
 		makeFile(t, altDir, "active", "no\n")
 	}
@@ -218,7 +218,7 @@ func TestParsePartner_WithAlternateModes(t *testing.T) {
 	partnerDir := makeDir(t, t.TempDir(), "port0-partner")
 	altDir := makeDir(t, partnerDir, "port0-partner.0")
 	makeFile(t, altDir, "description", "DisplayPort\n")
-	makeFile(t, altDir, "svid", "0xff01\n")
+	makeFile(t, altDir, "svid", "ff01\n")
 	makeFile(t, altDir, "vdo", "0x0\n")
 	makeFile(t, altDir, "active", "yes\n")
 
