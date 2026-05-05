@@ -1,6 +1,6 @@
 # lsusbc
 
-A CLI utility to display USB-C device information from Linux's typec sysfs interface.
+A CLI utility to display USB Type-C device and USB Power Delivery (PD) information from Linux's typec sysfs interface.
 
 ## Features
 
@@ -42,14 +42,22 @@ Arrow direction indicates power flow:
 - Amount of information available depends on hardware and kernel version.
 - It's possible for the /sys/class/typec information to get stuck. `rmmod ucsi_acpi; modprobe ucsi_acpi` may help, or a reboot may be required.
 
-# alternatives
+## Bug Reports
 
-- Cyme (but more for other USB devices) https://github.com/tuna-f1sh/cyme?tab=readme-ov-file
+If you encounter any issues, please create and share a snapshot of your USB devices. Create one by running
+`bash ./snapshot-sys.sh`
+Create a tarball using the displayed command.
 
-# references
+# Alternatives
 
-- https://www.usb.org/sites/default/files/D1T2-3b%20-%20USB%20Type-C%20Linux%20Connector%20Class.pdf
+- Cyme (but more for other USB devices) https://github.com/tuna-f1sh/cyme
+- https://github.com/doug-gilbert/lsucpd
+- https://github.com/darrylmorley/whatcable - Shows info about USB-C cables, Mac OS only
+
+# References
+
 - https://www.kernel.org/doc/html/latest/driver-api/usb/typec.html
 - https://www.kernel.org/doc/html/latest/admin-guide/abi-testing.html#abi-sys-class-typec-port-data-role
 - https://github.com/torvalds/linux/blob/master/drivers/usb/typec/class.c
+- https://hackaday.com/series_of_posts/all-about-usb-c/
 - https://fabiensanglard.net/usbcheat/index.html
