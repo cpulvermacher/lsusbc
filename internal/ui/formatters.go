@@ -7,6 +7,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/cpulvermacher/lsusbc/internal/model"
+	"github.com/cpulvermacher/lsusbc/internal/svid"
 )
 
 var (
@@ -84,11 +85,19 @@ func formatAlternateMode(mode model.AlternateMode) string {
 	if mode.Active == "yes" {
 		marker = "*"
 	}
+	description := mode.Description
+	if vendor := svid.VendorName(mode.SVID); vendor != "" && vendor != description {
+		if description == "" {
+			description = vendor
+		} else {
+			description += " (" + vendor + ")"
+		}
+	}
 	extra := dpPortCapability(mode)
 	if extra != "" {
-		return fmt.Sprintf("   %s[%d] %s %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, extra, mode.SVID, mode.VDO)
+		return fmt.Sprintf("   %s[%d] %s %s (SVID: %s, VDO: %s)\n", marker, mode.Index, description, extra, mode.SVID, mode.VDO)
 	}
-	return fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, mode.Description, mode.SVID, mode.VDO)
+	return fmt.Sprintf("   %s[%d] %s (SVID: %s, VDO: %s)\n", marker, mode.Index, description, mode.SVID, mode.VDO)
 }
 
 // dpPortCapability parses a DisplayPort VDO to return a string like "sink, native DP" or "source+sink, tunneling".

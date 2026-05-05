@@ -184,7 +184,7 @@ func TestFormatAlternateMode(t *testing.T) {
 		{
 			name: "non-DP mode",
 			mode: model.AlternateMode{Index: 0, Description: "Thunderbolt", SVID: "8087", VDO: "0x0", Active: "no"},
-			want: "    [0] Thunderbolt (SVID: 8087, VDO: 0x0)\n",
+			want: "    [0] Thunderbolt (Thunderbolt 3) (SVID: 8087, VDO: 0x0)\n",
 		},
 		{
 			name: "DP sink, native DP + tunneling",
