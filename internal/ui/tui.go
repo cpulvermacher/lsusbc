@@ -54,13 +54,14 @@ type listItem struct {
 type UIModel struct {
 	SysfsDir string
 
-	ports          []model.Port
-	items          []listItem
-	selectedItem   int
-	showingDetails bool
-	battery        *model.BatteryInfo
-	termWidth      int
-	termHeight     int
+	ports                []model.Port
+	standaloneUSBDevices []model.USBDevice
+	items                []listItem
+	selectedItem         int
+	showingDetails       bool
+	battery              *model.BatteryInfo
+	termWidth            int
+	termHeight           int
 }
 
 type RefreshTick time.Time
@@ -113,7 +114,7 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func buildItemList(ports []model.Port) []listItem {
+func buildItemList(ports []model.Port, standaloneUSBDevices []model.USBDevice) []listItem {
 	var items []listItem
 	for i := range ports {
 		items = append(items, listItem{kind: kindPort, portIdx: i})
@@ -122,6 +123,9 @@ func buildItemList(ports []model.Port) []listItem {
 				items = appendDeviceItems(items, i, &ports[i].Partner.USBDevices[j])
 			}
 		}
+	}
+	for i := range standaloneUSBDevices {
+		items = appendDeviceItems(items, -1, &standaloneUSBDevices[i])
 	}
 	return items
 }
@@ -151,8 +155,8 @@ func (m UIModel) View() tea.View {
 	if m.ports == nil {
 		view.SetContent("Loading...")
 		return view
-	} else if len(m.ports) == 0 {
-		view.SetContent("No USB-C ports found")
+	} else if len(m.ports) == 0 && len(m.standaloneUSBDevices) == 0 {
+		view.SetContent("No USB devices found")
 		return view
 	}
 
@@ -173,6 +177,17 @@ func (m UIModel) View() tea.View {
 			for _, line := range treeLines {
 				ports += line + "\n"
 			}
+		}
+	}
+	if len(m.standaloneUSBDevices) > 0 {
+		if len(m.ports) > 0 {
+			ports += "\n"
+		}
+		ports += " Other USB Devices\n"
+		var treeLines []string
+		treeLines, itemIdx = renderUSBDeviceTree(m.standaloneUSBDevices, itemIdx, m.selectedItem, "    ")
+		for _, line := range treeLines {
+			ports += line + "\n"
 		}
 	}
 	lines := portListStyle.Render(ports)
@@ -249,7 +264,8 @@ func refresh(m UIModel) UIModel {
 	}
 
 	m.ports = ports
-	m.items = buildItemList(ports)
+	m.standaloneUSBDevices = parser.LoadStandaloneUSBDevices(m.SysfsDir, ports)
+	m.items = buildItemList(ports, m.standaloneUSBDevices)
 	if m.selectedItem >= len(m.items) {
 		m.selectedItem = max(0, len(m.items)-1)
 	}
@@ -483,7 +499,7 @@ func renderUSBDevicePanel(device model.USBDevice) string {
 	return s
 }
 
-// ListPorts loads and prints details for all ports to stdout.
+// ListPorts loads and prints details for all ports and standalone USB devices to stdout.
 func ListPorts(typecDir string) {
 	ports, err := parser.LoadPorts(typecDir)
 	if err != nil {
@@ -493,5 +509,14 @@ func ListPorts(typecDir string) {
 	for _, port := range ports {
 		fmt.Print(renderPortDetails(port))
 		fmt.Println()
+	}
+
+	standaloneUSBDevices := parser.LoadStandaloneUSBDevices(typecDir, ports)
+	if len(standaloneUSBDevices) > 0 {
+		fmt.Println("Other USB Devices")
+		lines, _ := renderUSBDeviceTree(standaloneUSBDevices, 0, -1, "")
+		for _, line := range lines {
+			fmt.Println(line)
+		}
 	}
 }

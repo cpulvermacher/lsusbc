@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/cpulvermacher/lsusbc/internal/model"
 )
 
 func makeUSBDevice(t *testing.T, usbDir, id string, files map[string]string) string {
@@ -224,5 +226,112 @@ func TestParseUSBDeviceInfo_WithSubDevices(t *testing.T) {
 	}
 	if sub.Product != "Headset" {
 		t.Errorf("sub Product = %q, want %q", sub.Product, "Headset")
+	}
+}
+
+func makeUSBBusDir(t *testing.T, sysfsRoot string) string {
+	t.Helper()
+	dir := filepath.Join(sysfsRoot, "bus/usb/devices")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
+func TestLoadStandaloneUSBDevices_Basic(t *testing.T) {
+	sysfsRoot := t.TempDir()
+	busDir := makeUSBBusDir(t, sysfsRoot)
+	usbDir := t.TempDir()
+
+	devicePath := makeUSBDevice(t, usbDir, "1-1", map[string]string{
+		"manufacturer": "Acme\n",
+		"product":      "Widget\n",
+	})
+	if err := os.Symlink(devicePath, filepath.Join(busDir, "1-1")); err != nil {
+		t.Fatal(err)
+	}
+
+	devices := LoadStandaloneUSBDevices(sysfsRoot, nil)
+
+	if len(devices) != 1 {
+		t.Fatalf("got %d devices, want 1", len(devices))
+	}
+	if devices[0].DeviceID != "1-1" {
+		t.Errorf("DeviceID = %q, want 1-1", devices[0].DeviceID)
+	}
+	if devices[0].Product != "Widget" {
+		t.Errorf("Product = %q, want Widget", devices[0].Product)
+	}
+}
+
+func TestLoadStandaloneUSBDevices_ExcludesClaimed(t *testing.T) {
+	sysfsRoot := t.TempDir()
+	busDir := makeUSBBusDir(t, sysfsRoot)
+	usbDir := t.TempDir()
+
+	for _, id := range []string{"1-1", "1-2"} {
+		devicePath := makeUSBDevice(t, usbDir, id, map[string]string{
+			"manufacturer": "Vendor\n",
+			"product":      "Device " + id + "\n",
+		})
+		if err := os.Symlink(devicePath, filepath.Join(busDir, id)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Mark 1-1 as claimed by a typec partner
+	ports := []model.Port{
+		{Partner: &model.Partner{
+			USBDevices: []model.USBDevice{{DeviceID: "1-1"}},
+		}},
+	}
+
+	devices := LoadStandaloneUSBDevices(sysfsRoot, ports)
+
+	if len(devices) != 1 {
+		t.Fatalf("got %d devices, want 1 (1-1 should be excluded)", len(devices))
+	}
+	if devices[0].DeviceID != "1-2" {
+		t.Errorf("DeviceID = %q, want 1-2", devices[0].DeviceID)
+	}
+}
+
+func TestLoadStandaloneUSBDevices_SkipsSubDevices(t *testing.T) {
+	sysfsRoot := t.TempDir()
+	busDir := makeUSBBusDir(t, sysfsRoot)
+	usbDir := t.TempDir()
+
+	// 1-1 is a hub with a sub-device 1-1.2
+	hubPath := makeUSBDevice(t, usbDir, "1-1", map[string]string{"product": "Hub\n"})
+	makeUSBDevice(t, hubPath, "1-1.2", map[string]string{"product": "Sub\n"})
+
+	if err := os.Symlink(hubPath, filepath.Join(busDir, "1-1")); err != nil {
+		t.Fatal(err)
+	}
+	// Also add 1-1.2 as a flat entry in bus/usb/devices (as Linux does)
+	subPath := filepath.Join(hubPath, "1-1.2")
+	if err := os.Symlink(subPath, filepath.Join(busDir, "1-1.2")); err != nil {
+		t.Fatal(err)
+	}
+
+	devices := LoadStandaloneUSBDevices(sysfsRoot, nil)
+
+	if len(devices) != 1 {
+		t.Fatalf("got %d top-level devices, want 1 (1-1.2 should not appear as top-level)", len(devices))
+	}
+	if devices[0].DeviceID != "1-1" {
+		t.Errorf("DeviceID = %q, want 1-1", devices[0].DeviceID)
+	}
+	if len(devices[0].USBDevices) != 1 {
+		t.Errorf("got %d sub-devices, want 1", len(devices[0].USBDevices))
+	}
+}
+
+func TestLoadStandaloneUSBDevices_NoBusDir(t *testing.T) {
+	sysfsRoot := t.TempDir()
+	// No bus/usb/devices directory — should return nil gracefully
+	devices := LoadStandaloneUSBDevices(sysfsRoot, nil)
+	if devices != nil {
+		t.Errorf("expected nil, got %v", devices)
 	}
 }

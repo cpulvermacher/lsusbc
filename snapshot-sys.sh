@@ -100,6 +100,22 @@ for entry in /sys/class/typec/*; do
     done < <(find "$real" -maxdepth 1 -type l 2>/dev/null)
 done
 
+echo "=== USB device trees (all bus/usb devices) ===" >&2
+if [ -d "/sys/bus/usb/devices" ]; then
+    copy_tree "/sys/bus/usb/devices"
+    for entry in /sys/bus/usb/devices/*; do
+        [ -e "$entry" ] || continue
+        name=$(basename "$entry")
+        # Only root-level devices: "N-M" with no dots (direct port on root hub)
+        [[ "$name" =~ ^[0-9]+-[0-9]+$ ]] || continue
+        usb_real=$(readlink -f "$entry" 2>/dev/null) || continue
+        [ -d "$usb_real" ] || continue
+        [[ "${seen_usb[$usb_real]+_}" ]] && continue
+        seen_usb["$usb_real"]=1
+        copy_tree "$usb_real"
+    done
+fi
+
 echo "Done. Snapshot written to: $DEST" >&2
 echo ""
 echo "For submitting bug reports, create a compressed tarball using:"
