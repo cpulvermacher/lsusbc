@@ -15,6 +15,19 @@ var (
 	powerModeCurrent3A   = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
 	powerModeCurrent1_5A = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
 	powerModeUsb         = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
+
+	// USB 1.0
+	usbSpeed12 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#ffffff")).Foreground(lipgloss.Black)
+	// USB 2.0
+	usbSpeed480 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#000000")).Foreground(lipgloss.White)
+	// USB 3.0 / 3.1 gen1
+	usbSpeed5000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#005eb8")).Foreground(lipgloss.White)
+	// USB 3.1 gen2 / 3.2
+	usbSpeed10000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#0baadf")).Foreground(lipgloss.Black)
+	// USB 3.2
+	usbSpeed20000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#00d6e6")).Foreground(lipgloss.Black)
+	// USB 4.0 / Thunderbolt 3
+	usbSpeed40000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#54ffd6")).Foreground(lipgloss.Black)
 )
 
 // FormatVoltage converts mV to human-readable format (e.g., "5V", "20V", "3.3-21V")
@@ -51,8 +64,8 @@ func formatMilliVolts(mv int) string {
 	return fmt.Sprintf("%.2gV", float64(mv)/1000.0)
 }
 
-// formatCapabilities formats the power mode label for the port list overview.
-func formatCapabilities(pd *model.PowerDelivery, powerOperationMode string) string {
+// formats the power mode label for the port list overview.
+func formatPowerModeInline(pd *model.PowerDelivery, powerOperationMode string) string {
 	switch powerOperationMode {
 	case "default":
 		return powerModeUsb.Render("[≤5W]")
@@ -76,6 +89,37 @@ func formatCapabilities(pd *model.PowerDelivery, powerOperationMode string) stri
 		return powerModePd.Render("[" + label + "]")
 	default:
 		return ""
+	}
+}
+
+func formatUsbSpeedInline(device model.USBDevice) string {
+	label := formatUsbSpeed(device)
+	if label != "" {
+		return fmt.Sprintf(" [%s]", label)
+	}
+	return label
+}
+
+func formatUsbSpeed(device model.USBDevice) string {
+	if device.Speed == "" {
+		return ""
+	}
+	text := fmt.Sprintf("%s Mb/s", device.Speed)
+	switch device.Speed {
+	case "12":
+		return usbSpeed12.Render(text)
+	case "480":
+		return usbSpeed480.Render(text)
+	case "5000":
+		return usbSpeed5000.Render(text)
+	case "10000":
+		return usbSpeed10000.Render(text)
+	case "20000":
+		return usbSpeed20000.Render(text)
+	case "40000":
+		return usbSpeed40000.Render(text)
+	default:
+		return text
 	}
 }
 

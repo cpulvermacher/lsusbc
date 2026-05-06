@@ -110,7 +110,7 @@ func TestMaxWatts_Empty(t *testing.T) {
 	}
 }
 
-func TestFormatCapabilities_NonPD(t *testing.T) {
+func TestFormatPowerModeInline_NonPD(t *testing.T) {
 	tests := []struct {
 		mode string
 		want string
@@ -122,54 +122,54 @@ func TestFormatCapabilities_NonPD(t *testing.T) {
 		{"unknown", ""},
 	}
 	for _, tt := range tests {
-		got := stripANSI(formatCapabilities(nil, tt.mode))
+		got := stripANSI(formatPowerModeInline(nil, tt.mode))
 		if got != tt.want {
-			t.Errorf("formatCapabilities(nil, %q) = %q, want %q", tt.mode, got, tt.want)
+			t.Errorf("formatPowerModeInline(nil, %q) = %q, want %q", tt.mode, got, tt.want)
 		}
 	}
 }
 
-func TestFormatCapabilities_PD_NilPD(t *testing.T) {
-	got := stripANSI(formatCapabilities(nil, "usb_power_delivery"))
+func TestFormatPowerModeInline_PD_NilPD(t *testing.T) {
+	got := stripANSI(formatPowerModeInline(nil, "usb_power_delivery"))
 	if got != "[PD]" {
 		t.Errorf("got %q, want %q", got, "[PD]")
 	}
 }
 
-func TestFormatCapabilities_PD_WithRevision(t *testing.T) {
+func TestFormatPowerModeInline_PD_WithRevision(t *testing.T) {
 	pd := &model.PowerDelivery{Revision: "3.0"}
-	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	got := stripANSI(formatPowerModeInline(pd, "usb_power_delivery"))
 	if got != "[PD 3.0]" {
 		t.Errorf("got %q, want %q", got, "[PD 3.0]")
 	}
 }
 
-func TestFormatCapabilities_PD_WithWatts(t *testing.T) {
+func TestFormatPowerModeInline_PD_WithWatts(t *testing.T) {
 	pd := &model.PowerDelivery{
 		Revision:           "3.0",
 		SourceCapabilities: []model.PowerCapability{{Voltage: 20000, MaximumCurrent: 5000}},
 	}
-	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	got := stripANSI(formatPowerModeInline(pd, "usb_power_delivery"))
 	if got != "[PD 3.0, 100W]" {
 		t.Errorf("got %q, want %q", got, "[PD 3.0, 100W]")
 	}
 }
 
-func TestFormatCapabilities_PD_ACPowered(t *testing.T) {
+func TestFormatPowerModeInline_PD_ACPowered(t *testing.T) {
 	pd := &model.PowerDelivery{
 		Revision:           "3.0",
 		ACPowered:          true,
 		SourceCapabilities: []model.PowerCapability{{Voltage: 20000, MaximumCurrent: 5000}},
 	}
-	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	got := stripANSI(formatPowerModeInline(pd, "usb_power_delivery"))
 	if got != "[PD 3.0, 100W, AC]" {
 		t.Errorf("got %q, want %q", got, "[PD 3.0, 100W, AC]")
 	}
 }
 
-func TestFormatCapabilities_PD_ZeroRevision(t *testing.T) {
+func TestFormatPowerModeInline_PD_ZeroRevision(t *testing.T) {
 	pd := &model.PowerDelivery{Revision: "0.0"}
-	got := stripANSI(formatCapabilities(pd, "usb_power_delivery"))
+	got := stripANSI(formatPowerModeInline(pd, "usb_power_delivery"))
 	if got != "[PD]" {
 		t.Errorf("got %q, want %q", got, "[PD]")
 	}
