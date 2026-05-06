@@ -157,89 +157,56 @@ func (m UIModel) View() tea.View {
 		return view
 	}
 
-	// 0: decide layout
-	var isHorizontal bool
-	var listStyle lipgloss.Style
-	detailsStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#8e8e8e")).
-		Padding(1, 2)
-
-	if m.termWidth < 70 {
-		isHorizontal = false
-		listStyle = lipgloss.NewStyle().Width(m.termWidth)
-		detailsStyle = detailsStyle.Width(m.termWidth)
-	} else {
-		isHorizontal = true
-		listStyle = lipgloss.NewStyle().MaxWidth(m.termWidth * 4 / 7).Height(m.termHeight - 1)
-		detailsStyle = detailsStyle.Height(m.termHeight - 1) // width adjusted based on actual list width
-	}
-
-	// 1: port list
-	var ports string
+	// 1: list panel
+	var listContent string
 	itemIdx := 0
 	for _, port := range m.ports {
-		ports += renderPort(port, itemIdx == m.selectedItem) + " "
+		listContent += renderPort(port, itemIdx == m.selectedItem) + " "
 		if port.Partner == nil {
-			ports += inactiveStyle.Render("(no device connected)") + "\n"
+			listContent += inactiveStyle.Render("(no device connected)") + "\n"
 		} else {
-			ports += renderConnection(port) + "\n"
+			listContent += renderConnection(port) + "\n"
 		}
 		itemIdx++
 		if port.Partner != nil {
 			var treeLines []string
 			treeLines, itemIdx = renderUSBDeviceTree(port.Partner.USBDevices, itemIdx, m.selectedItem, "    ")
 			for _, line := range treeLines {
-				ports += line + "\n"
+				listContent += line + "\n"
 			}
 		}
 	}
 	if len(m.standaloneUSBDevices) > 0 {
 		if len(m.ports) > 0 {
-			ports += "\n"
+			listContent += "\n"
 		}
-		ports += " Other USB Devices\n"
+		listContent += " Other USB Devices\n"
 		var treeLines []string
 		treeLines, _ = renderUSBDeviceTree(m.standaloneUSBDevices, itemIdx, m.selectedItem, "    ")
 		for _, line := range treeLines {
-			ports += line + "\n"
+			listContent += line + "\n"
 		}
 	}
 
-	lines := listStyle.Render(ports)
-
-	// 2: details
+	// 2: details panel
+	detailsContent := ""
 	if len(m.items) > 0 {
 		selected := m.items[m.selectedItem]
-		var details string
 		if selected.kind == kindPort {
-			details = renderPortDetails(m.ports[selected.portIdx])
+			detailsContent = renderPortDetails(m.ports[selected.portIdx])
 		} else {
-			details = renderUSBDevicePanel(*selected.device)
+			detailsContent = renderUSBDevicePanel(*selected.device)
 		}
-		instruction := helpText.Render("\nPress Escape or q to close")
 
-		if isHorizontal {
-			listWidth := lipgloss.Width(lines)
-			detailsStyle = detailsStyle.Width(m.termWidth - listWidth)
-			renderedDetails := detailsStyle.Render(details + instruction)
-			lines = lipgloss.JoinHorizontal(lipgloss.Top, lines, renderedDetails)
-		} else {
-			renderedDetails := detailsStyle.Render(details + instruction)
-			lines = lipgloss.JoinVertical(lipgloss.Top, lines, renderedDetails)
-		}
 	}
 
-	// set fixed height for 1+2
-	if m.termHeight > 1 {
-		lines = lipgloss.NewStyle().Width(m.termWidth).Height(m.termHeight - 1).Render(lines)
-	}
+	content := buildPanelLayout(m, listContent, detailsContent)
 
 	// 3: status bar
 	bar := renderStatusBar(m)
-	lines = lipgloss.JoinVertical(lipgloss.Left, lines, bar)
+	content = lipgloss.JoinVertical(lipgloss.Left, content, bar)
 
-	view.SetContent(lines)
+	view.SetContent(content)
 	return view
 }
 
@@ -294,6 +261,39 @@ func refresh(m UIModel) UIModel {
 	}
 	m.battery = parser.LoadBatteryInfo(m.sysfsDir)
 	return m
+}
+
+// adjusts panel orientation and size based on terminal size and list width
+func buildPanelLayout(m UIModel, listContent string, detailsContent string) string {
+	detailsStyleBase := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#8e8e8e")).
+		Padding(1, 2)
+
+	if m.termWidth < 70 {
+		// narrow window => vertical layout
+		listStyle := lipgloss.NewStyle().Width(m.termWidth)
+		detailsStyle := detailsStyleBase.Width(m.termWidth)
+
+		listPanel := listStyle.Render(listContent)
+		detailsPanel := detailsStyle.Render(detailsContent)
+
+		content := lipgloss.JoinVertical(lipgloss.Top, listPanel, detailsPanel)
+		// reserve status bar line
+		return lipgloss.NewStyle().Width(m.termWidth).Height(m.termHeight - 1).Render(content)
+	} else {
+		// horizontal layout
+		actualListWidth := lipgloss.Width(listContent)
+		listWidth := min(actualListWidth, m.termWidth*4/7)
+
+		listStyle := lipgloss.NewStyle().Width(listWidth).Height(m.termHeight - 1)
+		detailsStyle := detailsStyleBase.Width(m.termWidth - listWidth).Height(m.termHeight - 1)
+
+		listPanel := listStyle.Render(listContent)
+		detailsPanel := detailsStyle.Render(detailsContent)
+
+		return lipgloss.JoinHorizontal(lipgloss.Top, listPanel, detailsPanel)
+	}
 }
 
 func portDisplayName(name string) string {
