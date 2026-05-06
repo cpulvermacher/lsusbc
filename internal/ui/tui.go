@@ -36,6 +36,19 @@ var (
 	batteryNormal   = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
 	batteryLow      = lipgloss.NewStyle().Foreground(lipgloss.Color("#fec400"))
 	batteryCritical = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe8000"))
+
+	// USB 1.0
+	usbSpeed12 = lipgloss.NewStyle().Foreground(lipgloss.Color("#cccccc"))
+	// USB 2.0
+	usbSpeed480 = lipgloss.NewStyle().Foreground(lipgloss.Color("#8370fa"))
+	// USB 3.0 / 3.1 gen1
+	usbSpeed5000 = lipgloss.NewStyle().Foreground(lipgloss.Color("#538fff"))
+	// USB 3.1 gen2 / 3.2
+	usbSpeed10000 = lipgloss.NewStyle().Foreground(lipgloss.Color("#0baaff"))
+	// USB 3.2
+	usbSpeed20000 = lipgloss.NewStyle().Foreground(lipgloss.Color("#00c0ff"))
+	// USB 4.0 / Thunderbolt 3
+	usbSpeed40000 = lipgloss.NewStyle().Foreground(lipgloss.Color("#00d3ff"))
 )
 
 type itemKind int
