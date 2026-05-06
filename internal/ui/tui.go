@@ -77,7 +77,8 @@ func InitializeModel(sysfsDir string) UIModel {
 type RefreshTick time.Time
 
 func doTick() tea.Cmd {
-	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+	const refreshInterval = 1 * time.Second
+	return tea.Tick(refreshInterval, func(t time.Time) tea.Msg {
 		return RefreshTick(t)
 	})
 }
