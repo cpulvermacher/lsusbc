@@ -45,11 +45,10 @@ type listItem struct {
 
 type UIModel struct {
 	// user/env controlled
-	sysfsDir       string
-	termWidth      int
-	termHeight     int
-	selectedItem   int
-	showingDetails bool
+	sysfsDir     string
+	termWidth    int
+	termHeight   int
+	selectedItem int
 
 	// displayed items
 	ports                []model.Port
@@ -83,9 +82,6 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "space", "enter":
-			m.showingDetails = true
-			return m, nil
 		case "r":
 			return refresh(m), nil
 		case "j", "down":
@@ -93,10 +89,6 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "k", "up":
 			return moveSelection(m, -1), nil
 		case "q", "esc":
-			if m.showingDetails {
-				m.showingDetails = false
-				return m, nil
-			}
 			return m, tea.Quit
 		case "ctrl+c":
 			return m, tea.Quit
@@ -217,7 +209,7 @@ func (m UIModel) View() tea.View {
 	lines := listStyle.Render(ports)
 
 	// 2: details
-	if m.showingDetails && len(m.items) > 0 {
+	if len(m.items) > 0 {
 		selected := m.items[m.selectedItem]
 		var details string
 		if selected.kind == kindPort {
