@@ -52,16 +52,26 @@ type listItem struct {
 }
 
 type UIModel struct {
-	SysfsDir string
+	// user/env controlled
+	sysfsDir       string
+	termWidth      int
+	termHeight     int
+	selectedItem   int
+	showingDetails bool
 
+	// displayed items
 	ports                []model.Port
 	standaloneUSBDevices []model.USBDevice
 	items                []listItem
-	selectedItem         int
-	showingDetails       bool
 	battery              *model.BatteryInfo
-	termWidth            int
-	termHeight           int
+}
+
+func InitializeModel(sysfsDir string) UIModel {
+	return UIModel{
+		sysfsDir:   sysfsDir,
+		termWidth:  80,
+		termHeight: 24,
+	}
 }
 
 type RefreshTick time.Time
@@ -245,8 +255,8 @@ func renderStatusBar(m UIModel) string {
 		parts = append(parts, bat)
 	}
 
-	if m.SysfsDir != "/sys" {
-		parts = append(parts, "sysfs: "+m.SysfsDir)
+	if m.sysfsDir != "/sys" {
+		parts = append(parts, "sysfs: "+m.sysfsDir)
 	}
 
 	text := strings.Join(parts, "  |  ")
@@ -259,19 +269,19 @@ func renderStatusBar(m UIModel) string {
 }
 
 func refresh(m UIModel) UIModel {
-	ports, err := parser.LoadPorts(m.SysfsDir)
+	ports, err := parser.LoadPorts(m.sysfsDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
 		os.Exit(1)
 	}
 
 	m.ports = ports
-	m.standaloneUSBDevices = parser.LoadStandaloneUSBDevices(m.SysfsDir, ports)
+	m.standaloneUSBDevices = parser.LoadStandaloneUSBDevices(m.sysfsDir, ports)
 	m.items = buildItemList(ports, m.standaloneUSBDevices)
 	if m.selectedItem >= len(m.items) {
 		m.selectedItem = max(0, len(m.items)-1)
 	}
-	m.battery = parser.LoadBatteryInfo(m.SysfsDir)
+	m.battery = parser.LoadBatteryInfo(m.sysfsDir)
 	return m
 }
 

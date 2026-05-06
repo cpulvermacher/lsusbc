@@ -30,14 +30,8 @@ func main() {
 		return
 	}
 
-	if _, err := tea.NewProgram(newModel(*sysfsDir)).Run(); err != nil {
+	if _, err := tea.NewProgram(ui.InitializeModel(*sysfsDir)).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
-	}
-}
-
-func newModel(sysfsDir string) ui.UIModel {
-	return ui.UIModel{
-		SysfsDir: sysfsDir,
 	}
 }
