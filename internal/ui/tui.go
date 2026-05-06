@@ -97,6 +97,8 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "ctrl+c":
 			return m, tea.Quit
+		case "ctrl+z":
+			return m, tea.Suspend
 		}
 
 	case RefreshTick:
