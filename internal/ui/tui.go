@@ -19,14 +19,6 @@ var (
 	selectedStyle      = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#2f2f2f"))
 	powerArrowCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#aad700"))
 
-	portListStyle = lipgloss.NewStyle().Width(40)
-	detailsStyle  = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#8e8e8e")).
-			Padding(1, 2).
-			MarginLeft(10).
-			Width(70)
-
 	helpText  = lipgloss.NewStyle().Foreground(lipgloss.Color("#6e6e6e"))
 	statusBar = lipgloss.NewStyle().
 			Background(lipgloss.Color("#000000")).
@@ -173,6 +165,24 @@ func (m UIModel) View() tea.View {
 		return view
 	}
 
+	// 0: decide layout
+	var isHorizontal bool
+	var listStyle lipgloss.Style
+	detailsStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#8e8e8e")).
+		Padding(1, 2)
+
+	if m.termWidth < 70 {
+		isHorizontal = false
+		listStyle = lipgloss.NewStyle().Width(m.termWidth)
+		detailsStyle = detailsStyle.Width(m.termWidth)
+	} else {
+		isHorizontal = true
+		listStyle = lipgloss.NewStyle().MaxWidth(m.termWidth * 4 / 7).Height(m.termHeight - 1)
+		detailsStyle = detailsStyle.Height(m.termHeight - 1) // width adjusted based on actual list width
+	}
+
 	// 1: port list
 	var ports string
 	itemIdx := 0
@@ -203,7 +213,8 @@ func (m UIModel) View() tea.View {
 			ports += line + "\n"
 		}
 	}
-	lines := portListStyle.Render(ports)
+
+	lines := listStyle.Render(ports)
 
 	// 2: details
 	if m.showingDetails && len(m.items) > 0 {
@@ -215,9 +226,16 @@ func (m UIModel) View() tea.View {
 			details = renderUSBDevicePanel(*selected.device)
 		}
 		instruction := helpText.Render("\nPress Escape or q to close")
-		popup := detailsStyle.Render(details + instruction)
 
-		lines = lipgloss.JoinHorizontal(lipgloss.Top, lines, popup)
+		if isHorizontal {
+			listWidth := lipgloss.Width(lines)
+			detailsStyle = detailsStyle.Width(m.termWidth - listWidth)
+			renderedDetails := detailsStyle.Render(details + instruction)
+			lines = lipgloss.JoinHorizontal(lipgloss.Top, lines, renderedDetails)
+		} else {
+			renderedDetails := detailsStyle.Render(details + instruction)
+			lines = lipgloss.JoinVertical(lipgloss.Top, lines, renderedDetails)
+		}
 	}
 
 	// set fixed height for 1+2
