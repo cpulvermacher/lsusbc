@@ -519,6 +519,9 @@ func renderUSBDevicePanel(device model.USBDevice) string {
 	if device.Speed != "" {
 		s += fmt.Sprintf("Speed: %s\n", formatUsbSpeed(device))
 	}
+	if device.MaxPower != "" {
+		s += fmt.Sprintf("Max Power: %s\n", device.MaxPower)
+	}
 	return s
 }
 

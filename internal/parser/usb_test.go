@@ -34,6 +34,7 @@ func TestParseUSBDeviceInfo(t *testing.T) {
 		"idProduct":    "5678\n",
 		"speed":        "480\n",
 		"version":      "2.00\n",
+		"bMaxPower":    "500mA\n",
 	})
 	if err := os.Symlink(devicePath, filepath.Join(partnerDir, "1-4")); err != nil {
 		t.Fatal(err)
@@ -62,6 +63,9 @@ func TestParseUSBDeviceInfo(t *testing.T) {
 	}
 	if dev.Speed != "480" {
 		t.Errorf("Speed = %q, want %q", dev.Speed, "480")
+	}
+	if dev.MaxPower != "500mA" {
+		t.Errorf("MaxPower = %q, want %q", dev.MaxPower, "500mA")
 	}
 }
 

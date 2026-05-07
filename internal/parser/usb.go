@@ -57,6 +57,7 @@ func LoadStandaloneUSBDevices(sysfsPath string, ports []model.Port) []model.USBD
 			IDProduct:    readFile(filepath.Join(path, "idProduct")),
 			Speed:        readFile(filepath.Join(path, "speed")),
 			Version:      readFile(filepath.Join(path, "version")),
+			MaxPower:     readFile(filepath.Join(path, "bMaxPower")),
 			USBDevices:   subDevices,
 		})
 	}
@@ -106,6 +107,7 @@ func parseUSBDeviceInfo(dir string) []model.USBDevice {
 			IDProduct:    readFile(filepath.Join(path, "idProduct")),
 			Speed:        readFile(filepath.Join(path, "speed")),
 			Version:      readFile(filepath.Join(path, "version")),
+			MaxPower:     readFile(filepath.Join(path, "bMaxPower")),
 			USBDevices:   subDevices,
 		})
 	}
