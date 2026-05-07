@@ -58,6 +58,7 @@ func LoadStandaloneUSBDevices(sysfsPath string, ports []model.Port) []model.USBD
 			Speed:        readFile(filepath.Join(path, "speed")),
 			Version:      readFile(filepath.Join(path, "version")),
 			MaxPower:     readFile(filepath.Join(path, "bMaxPower")),
+			Drivers:      readDrivers(path),
 			USBDevices:   subDevices,
 		})
 	}
@@ -108,10 +109,39 @@ func parseUSBDeviceInfo(dir string) []model.USBDevice {
 			Speed:        readFile(filepath.Join(path, "speed")),
 			Version:      readFile(filepath.Join(path, "version")),
 			MaxPower:     readFile(filepath.Join(path, "bMaxPower")),
+			Drivers:      readDrivers(path),
 			USBDevices:   subDevices,
 		})
 	}
 	return devices
+}
+
+// readDrivers returns unique driver names from interface subdirectories (e.g., "1-4:1.0/driver").
+// The "usb" driver is excluded as it's the generic hub/root driver and not informative.
+func readDrivers(devicePath string) []string {
+	entries, err := os.ReadDir(devicePath)
+	if err != nil {
+		return nil
+	}
+
+	seen := make(map[string]bool)
+	var drivers []string
+	for _, entry := range entries {
+		if !strings.Contains(entry.Name(), ":") {
+			continue
+		}
+		link, err := os.Readlink(filepath.Join(devicePath, entry.Name(), "driver"))
+		if err != nil {
+			continue
+		}
+		name := filepath.Base(link)
+		if name == "usb" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		drivers = append(drivers, name)
+	}
+	return drivers
 }
 
 // isUSBDeviceID returns true for USB device IDs like "1-4" or "2-1.3"

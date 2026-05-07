@@ -522,6 +522,9 @@ func renderUSBDevicePanel(device model.USBDevice) string {
 	if device.MaxPower != "" {
 		s += fmt.Sprintf("Max Power: %s\n", device.MaxPower)
 	}
+	if len(device.Drivers) > 0 {
+		s += fmt.Sprintf("Driver: %s\n", strings.Join(device.Drivers, ", "))
+	}
 	return s
 }
 

@@ -233,6 +233,68 @@ func TestParseUSBDeviceInfo_WithSubDevices(t *testing.T) {
 	}
 }
 
+func TestReadDrivers(t *testing.T) {
+	deviceDir := t.TempDir()
+
+	for _, iface := range []struct{ name, driver string }{
+		{"1-4:1.0", "usbhid"},
+		{"1-4:1.1", "usbhid"}, // duplicate — should appear once
+		{"1-4:1.2", "usb"},    // should be filtered out
+	} {
+		ifaceDir := filepath.Join(deviceDir, iface.name)
+		if err := os.MkdirAll(ifaceDir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		target := "../../../../../../bus/usb/drivers/" + iface.driver
+		if err := os.Symlink(target, filepath.Join(ifaceDir, "driver")); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	drivers := readDrivers(deviceDir)
+
+	if len(drivers) != 1 || drivers[0] != "usbhid" {
+		t.Errorf("got %v, want [usbhid]", drivers)
+	}
+}
+
+func TestReadDrivers_NoInterfaces(t *testing.T) {
+	deviceDir := t.TempDir()
+	drivers := readDrivers(deviceDir)
+	if len(drivers) != 0 {
+		t.Errorf("got %v, want empty", drivers)
+	}
+}
+
+func TestParseUSBDeviceInfo_Driver(t *testing.T) {
+	partnerDir := t.TempDir()
+	usbDir := t.TempDir()
+
+	devicePath := makeUSBDevice(t, usbDir, "1-4", map[string]string{
+		"manufacturer": "Acme\n",
+		"product":      "Widget\n",
+	})
+	ifaceDir := filepath.Join(devicePath, "1-4:1.0")
+	if err := os.MkdirAll(ifaceDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("../../../../../../bus/usb/drivers/usb-storage", filepath.Join(ifaceDir, "driver")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(devicePath, filepath.Join(partnerDir, "1-4")); err != nil {
+		t.Fatal(err)
+	}
+
+	devices := parseUSBDeviceInfo(partnerDir)
+
+	if len(devices) != 1 {
+		t.Fatalf("got %d devices, want 1", len(devices))
+	}
+	if len(devices[0].Drivers) != 1 || devices[0].Drivers[0] != "usb-storage" {
+		t.Errorf("Drivers = %v, want [usb-storage]", devices[0].Drivers)
+	}
+}
+
 func makeUSBBusDir(t *testing.T, sysfsRoot string) string {
 	t.Helper()
 	dir := filepath.Join(sysfsRoot, "bus/usb/devices")

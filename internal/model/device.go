@@ -49,6 +49,7 @@ type USBDevice struct {
 	Speed        string      // Speed in Mb/s (e.g., "480", "5000")
 	Version      string      // USB version (e.g., "2.10", "3.20")
 	MaxPower     string      // Max power draw (e.g., "500mA")
+	Drivers      []string    // Driver names from interface subdirectories (e.g., ["usbhid", "usb-storage"])
 	USBDevices   []USBDevice // USB devices connected through this hub
 }
 
