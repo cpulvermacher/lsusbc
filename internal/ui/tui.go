@@ -25,9 +25,9 @@ var (
 			Foreground(lipgloss.Color("#9e9e9e"))
 
 	batteryCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#91e500"))
-	batteryNormal   = lipgloss.NewStyle().Foreground(lipgloss.Color("#d0e440"))
-	batteryLow      = lipgloss.NewStyle().Foreground(lipgloss.Color("#fec400"))
-	batteryCritical = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe8000"))
+	batteryNormal   = lipgloss.NewStyle().Foreground(lipgloss.Color("#e0e400"))
+	batteryLow      = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe7400"))
+	batteryCritical = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe4000"))
 )
 
 type itemKind int
