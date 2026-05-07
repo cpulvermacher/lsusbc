@@ -19,7 +19,6 @@ var (
 	selectedStyle      = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#2f2f2f"))
 	powerArrowCharging = lipgloss.NewStyle().Foreground(lipgloss.Color("#aad700"))
 
-	helpText  = lipgloss.NewStyle().Foreground(lipgloss.Color("#6e6e6e"))
 	statusBar = lipgloss.NewStyle().
 			Background(lipgloss.Color("#000000")).
 			Foreground(lipgloss.Color("#9e9e9e"))
@@ -266,9 +265,10 @@ func refresh(m UIModel) UIModel {
 // adjusts panel orientation and size based on terminal size and list width
 func buildPanelLayout(m UIModel, listContent string, detailsContent string) string {
 	detailsStyleBase := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+		Border(lipgloss.NormalBorder(), false, false, false, true).
 		BorderForeground(lipgloss.Color("#8e8e8e")).
-		Padding(1, 2)
+		Margin(0, 1).
+		Padding(0, 1)
 
 	if m.termWidth < 70 {
 		// narrow window => vertical layout
