@@ -94,10 +94,11 @@ func formatPowerModeInline(pd *model.PowerDelivery, powerOperationMode string) s
 
 func formatUsbSpeedInline(device model.USBDevice) string {
 	label := formatUsbSpeed(device)
-	if label != "" {
-		return fmt.Sprintf(" [%s]", label)
+	if label == "" || device.Speed == "12" {
+		// omit unknown values and 12Mbit/s
+		return ""
 	}
-	return label
+	return fmt.Sprintf(" [%s]", label)
 }
 
 func formatUsbSpeed(device model.USBDevice) string {
