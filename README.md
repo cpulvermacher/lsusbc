@@ -45,7 +45,7 @@ Arrow direction indicates power flow:
 ## Bug Reports
 
 If you encounter any issues, please create and share a snapshot of your USB devices. Create one by running
-`bash ./snapshot-sys.sh`
+`bash ./scripts/snapshot-sys.sh`
 Create a tarball using the displayed command.
 
 # Alternatives
