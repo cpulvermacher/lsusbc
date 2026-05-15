@@ -528,8 +528,9 @@ func renderUSBDevicePanel(device model.USBDevice) string {
 	return s
 }
 
-// ListPorts loads and prints details for all ports and standalone USB devices to stdout.
-func ListPorts(typecDir string) {
+// ListPorts loads and prints ports and standalone USB devices to stdout.
+// When verbose is true, full detail panels are also printed below the tree overview.
+func ListPorts(typecDir string, verbose bool) {
 	ports, err := parser.LoadPorts(typecDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
@@ -537,7 +538,6 @@ func ListPorts(typecDir string) {
 	}
 
 	standaloneUSBDevices := parser.LoadStandaloneUSBDevices(typecDir, ports)
-	items := buildItemList(ports, standaloneUSBDevices)
 
 	// 1: tree overview
 	for _, port := range ports {
@@ -566,11 +566,16 @@ func ListPorts(typecDir string) {
 		}
 	}
 
+	if !verbose {
+		return
+	}
+
 	// 2: separator
 	fmt.Println()
 	fmt.Println(strings.Repeat("─", 48))
 
 	// 3: detail blocks
+	items := buildItemList(ports, standaloneUSBDevices)
 	for _, item := range items {
 		fmt.Println()
 		if item.kind == kindPort {

@@ -13,6 +13,7 @@ import (
 func main() {
 	sysfsDir := flag.String("d", "/sys", "sysfs directory")
 	listFlag := flag.Bool("l", false, "list devices and exit")
+	verboseFlag := flag.Bool("v", false, "include full device details (implies -l)")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
@@ -25,8 +26,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *listFlag || !term.IsTerminal(os.Stdout.Fd()) {
-		ui.ListPorts(*sysfsDir)
+	if *listFlag || *verboseFlag || !term.IsTerminal(os.Stdout.Fd()) {
+		ui.ListPorts(*sysfsDir, *verboseFlag)
 		return
 	}
 
