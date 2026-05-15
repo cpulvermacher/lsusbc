@@ -539,13 +539,44 @@ func ListPorts(typecDir string) {
 	standaloneUSBDevices := parser.LoadStandaloneUSBDevices(typecDir, ports)
 	items := buildItemList(ports, standaloneUSBDevices)
 
+	// 1: tree overview
+	for _, port := range ports {
+		fmt.Print(renderPort(port, false) + " ")
+		if port.Partner == nil {
+			fmt.Print(inactiveStyle.Render("(no device connected)"))
+		} else {
+			fmt.Print(renderConnection(port))
+		}
+		fmt.Println()
+		if port.Partner != nil {
+			lines, _ := renderUSBDeviceTree(port.Partner.USBDevices, 0, -1, "    ")
+			for _, line := range lines {
+				fmt.Println(line)
+			}
+		}
+	}
+	if len(standaloneUSBDevices) > 0 {
+		if len(ports) > 0 {
+			fmt.Println()
+		}
+		fmt.Println(" Other USB Devices")
+		lines, _ := renderUSBDeviceTree(standaloneUSBDevices, 0, -1, "    ")
+		for _, line := range lines {
+			fmt.Println(line)
+		}
+	}
+
+	// 2: separator
+	fmt.Println()
+	fmt.Println(strings.Repeat("─", 48))
+
+	// 3: detail blocks
 	for _, item := range items {
+		fmt.Println()
 		if item.kind == kindPort {
 			fmt.Print(renderPortDetails(ports[item.portIdx]))
-			fmt.Println()
 		} else {
 			fmt.Print(renderUSBDevicePanel(*item.device))
-			fmt.Println()
 		}
 	}
 }
