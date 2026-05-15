@@ -133,6 +133,8 @@ func gradientConnector(device model.USBDevice, n int) string {
 	for _, c := range steps[1:] {
 		b.WriteString(lipgloss.NewStyle().Foreground(c).Render("─"))
 	}
+	b.WriteString(lipgloss.NewStyle().Foreground(to).Render("─"))
+
 	return b.String()
 }
 

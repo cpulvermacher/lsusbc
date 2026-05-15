@@ -345,10 +345,10 @@ func renderUSBDeviceTree(devices []model.USBDevice, startIdx int, selectedItem i
 		var corner, childIndent string
 		if isLast {
 			corner = "╰"
-			childIndent = indent + strings.Repeat(" ", gradSteps+1)
+			childIndent = indent + strings.Repeat(" ", gradSteps+3)
 		} else {
 			corner = "├"
-			childIndent = indent + "│" + strings.Repeat(" ", gradSteps)
+			childIndent = indent + "│" + strings.Repeat(" ", gradSteps+2)
 		}
 
 		connector := indent + corner + gradientConnector(devices[i], gradSteps) + " "
