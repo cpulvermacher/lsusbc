@@ -6,38 +6,36 @@ A CLI utility to display USB Type-C device and USB Power Delivery (PD) informati
 
 ## Features
 
-- Display connected USB-C devices with visual representation
-- Show power delivery information (current, PD version)
-- Directional arrows indicating power flow
-- Detect device types (DisplayPort, chargers, phones, etc.)
+- Display connected USB-C and USB devices with visual representation
+- Show power information (max power, current/voltage capabilities, Power Delivery version, energy flow)
+- Details on connection speed, manufacturer info, driver, etc.
+- Show alternate modes (DisplayPort, Thunderbolt, etc.)
 
 ## Usage
 
-View current USB-C ports:
+Run without arguments for an interactive TUI:
 
 ```bash
 lsusbc
 ```
+
+Or use it like `lsusb` for quick one-shot output:
+
+```bash
+lsusbc -l        # compact tree overview
+lsusbc -v        # full details for every device
+```
+
+Arrow direction indicates power flow:
+
+- `===󱐋==>` Port is providing power to the connected device
+- `<==󱐋===` Port is receiving power (charging)
 
 ## Building
 
 ```bash
 go build
 ```
-
-## Example Output
-
-```
-port0 <--󱐋--- Charger  [3A, 3.4A, PD 2.0]
-port0 ---󱐋--> DisplayPort Device  [PD 2.0]
-port0 ---󱐋--> Phone/Device  [1.5A]
-port0 (no device connected)
-```
-
-Arrow direction indicates power flow:
-
-- `---󱐋--->` Port provides power to device
-- `<--󱐋---` Port receives power from device
 
 ## Limitations
 
