@@ -37,6 +37,7 @@ const (
 )
 
 type listItem struct {
+	id      string           // stable identifier: port name or USB device ID
 	kind    itemKind
 	portIdx int
 	device  *model.USBDevice // nil for kindPort
@@ -47,7 +48,8 @@ type UIModel struct {
 	sysfsDir     string
 	termWidth    int
 	termHeight   int
-	selectedItem int
+	selectedID   string // stable identifier for selected item (port name or USB device ID)
+	selectedItem int    // index of selectedID in items, kept in sync
 
 	// displayed items
 	ports                []model.Port
@@ -113,7 +115,7 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func buildItemList(ports []model.Port, standaloneUSBDevices []model.USBDevice) []listItem {
 	var items []listItem
 	for i := range ports {
-		items = append(items, listItem{kind: kindPort, portIdx: i})
+		items = append(items, listItem{id: ports[i].Name, kind: kindPort, portIdx: i})
 		if ports[i].Partner != nil {
 			for j := range ports[i].Partner.USBDevices {
 				items = appendDeviceItems(items, i, &ports[i].Partner.USBDevices[j])
@@ -127,7 +129,7 @@ func buildItemList(ports []model.Port, standaloneUSBDevices []model.USBDevice) [
 }
 
 func appendDeviceItems(items []listItem, portIdx int, dev *model.USBDevice) []listItem {
-	items = append(items, listItem{kind: kindUSBDevice, portIdx: portIdx, device: dev})
+	items = append(items, listItem{id: dev.DeviceID, kind: kindUSBDevice, portIdx: portIdx, device: dev})
 	for j := range dev.USBDevices {
 		items = appendDeviceItems(items, portIdx, &dev.USBDevices[j])
 	}
@@ -141,6 +143,7 @@ func moveSelection(m UIModel, increment int) tea.Model {
 	}
 
 	m.selectedItem += increment
+	m.selectedID = m.items[m.selectedItem].id
 	return m
 }
 
@@ -255,11 +258,25 @@ func refresh(m UIModel) UIModel {
 	m.ports = ports
 	m.standaloneUSBDevices = parser.LoadStandaloneUSBDevices(m.sysfsDir, ports)
 	m.items = buildItemList(ports, m.standaloneUSBDevices)
-	if m.selectedItem >= len(m.items) {
-		m.selectedItem = max(0, len(m.items)-1)
+	m.selectedItem = resolveSelection(m.items, m.selectedID, m.selectedItem)
+	if len(m.items) > 0 {
+		m.selectedID = m.items[m.selectedItem].id
 	}
 	m.battery = parser.LoadBatteryInfo(m.sysfsDir)
 	return m
+}
+
+// resolveSelection finds the index of selectedID in items.
+// Falls back to clamping prevIdx to the valid range if ID is not found.
+func resolveSelection(items []listItem, selectedID string, prevIdx int) int {
+	if selectedID != "" {
+		for i, item := range items {
+			if item.id == selectedID {
+				return i
+			}
+		}
+	}
+	return max(0, min(prevIdx, len(items)-1))
 }
 
 // adjusts panel orientation and size based on terminal size and list width
