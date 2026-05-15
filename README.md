@@ -2,6 +2,8 @@
 
 A CLI utility to display USB Type-C device and USB Power Delivery (PD) information from Linux's typec sysfs interface.
 
+![Demo](./demo.gif)
+
 ## Features
 
 - Display connected USB-C devices with visual representation
