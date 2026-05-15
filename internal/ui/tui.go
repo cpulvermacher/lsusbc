@@ -29,6 +29,8 @@ var (
 	batteryCritical = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe4000"))
 )
 
+const startIndent = ""
+
 type itemKind int
 
 const (
@@ -37,7 +39,7 @@ const (
 )
 
 type listItem struct {
-	id      string           // stable identifier: port name or USB device ID
+	id      string // stable identifier: port name or USB device ID
 	kind    itemKind
 	portIdx int
 	device  *model.USBDevice // nil for kindPort
@@ -172,7 +174,7 @@ func (m UIModel) View() tea.View {
 		itemIdx++
 		if port.Partner != nil {
 			var treeLines []string
-			treeLines, itemIdx = renderUSBDeviceTree(port.Partner.USBDevices, itemIdx, m.selectedItem, "    ")
+			treeLines, itemIdx = renderUSBDeviceTree(port.Partner.USBDevices, itemIdx, m.selectedItem, startIndent)
 			for _, line := range treeLines {
 				listContent += line + "\n"
 			}
@@ -184,7 +186,7 @@ func (m UIModel) View() tea.View {
 		}
 		listContent += " Other USB Devices\n"
 		var treeLines []string
-		treeLines, _ = renderUSBDeviceTree(m.standaloneUSBDevices, itemIdx, m.selectedItem, "    ")
+		treeLines, _ = renderUSBDeviceTree(m.standaloneUSBDevices, itemIdx, m.selectedItem, startIndent)
 		for _, line := range treeLines {
 			listContent += line + "\n"
 		}
@@ -568,7 +570,7 @@ func ListPorts(typecDir string, verbose bool) {
 		}
 		fmt.Println()
 		if port.Partner != nil {
-			lines, _ := renderUSBDeviceTree(port.Partner.USBDevices, 0, -1, "    ")
+			lines, _ := renderUSBDeviceTree(port.Partner.USBDevices, 0, -1, startIndent)
 			for _, line := range lines {
 				fmt.Println(line)
 			}
@@ -579,7 +581,7 @@ func ListPorts(typecDir string, verbose bool) {
 			fmt.Println()
 		}
 		fmt.Println(" Other USB Devices")
-		lines, _ := renderUSBDeviceTree(standaloneUSBDevices, 0, -1, "    ")
+		lines, _ := renderUSBDeviceTree(standaloneUSBDevices, 0, -1, startIndent)
 		for _, line := range lines {
 			fmt.Println(line)
 		}
