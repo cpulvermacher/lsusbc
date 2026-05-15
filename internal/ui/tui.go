@@ -358,7 +358,7 @@ func renderConnection(port model.Port) string {
 	if port.PowerRole == "sink" {
 		arrow = powerArrowCharging.Render("<==󱐋===")
 	} else {
-		arrow = "===󱐋==>"
+		arrow = "======>"
 	}
 
 	deviceName := getFriendlyDeviceName(port.Partner)
