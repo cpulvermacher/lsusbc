@@ -163,6 +163,9 @@ func (m UIModel) View() tea.View {
 
 	// 1: list panel
 	var listContent string
+	if len(m.ports) > 0 {
+		listContent += " USB-C Ports\n"
+	}
 	itemIdx := 0
 	for _, port := range m.ports {
 		listContent += renderPort(port, itemIdx == m.selectedItem) + " "
@@ -561,6 +564,9 @@ func ListPorts(typecDir string, verbose bool) {
 	standaloneUSBDevices := parser.LoadStandaloneUSBDevices(typecDir, ports)
 
 	// 1: tree overview
+	if len(ports) > 0 {
+		fmt.Println(" USB-C Ports")
+	}
 	for _, port := range ports {
 		fmt.Print(renderPort(port, false) + " ")
 		if port.Partner == nil {
