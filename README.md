@@ -11,6 +11,18 @@ A CLI utility to display USB Type-C device and USB Power Delivery (PD) informati
 - Details on connection speed, manufacturer info, driver, etc.
 - Show alternate modes (DisplayPort, Thunderbolt, etc.)
 
+## Installation
+
+```bash
+go install github.com/cpulvermacher/lsusbc@latest
+```
+
+Or build from source:
+
+```bash
+go build
+```
+
 ## Usage
 
 Run without arguments for an interactive TUI:
@@ -26,16 +38,17 @@ lsusbc -l        # compact tree overview
 lsusbc -v        # full details for every device
 ```
 
-Arrow direction indicates power flow:
+When stdout is not a terminal (e.g. piping to `grep`), list mode is used automatically.
 
-- `===󱐋==>` Port is providing power to the connected device
-- `<==󱐋===` Port is receiving power (charging)
+### TUI keyboard shortcuts
 
-## Building
-
-```bash
-go build
-```
+| Key | Action |
+|-----|--------|
+| `↑` / `k` | Select previous item |
+| `↓` / `j` | Select next item |
+| `q` / `Esc` | Quit |
+| `Ctrl+C` | Quit |
+| `Ctrl+Z` | Suspend |
 
 ## Limitations
 
