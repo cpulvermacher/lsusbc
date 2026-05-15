@@ -92,13 +92,26 @@ func formatPowerModeInline(pd *model.PowerDelivery, powerOperationMode string) s
 	}
 }
 
-func formatUsbSpeedInline(device model.USBDevice) string {
-	label := formatUsbSpeed(device)
-	if label == "" || device.Speed == "12" {
-		// omit unknown values and 12Mbit/s
-		return ""
+// usbSpeedConnector colors s using the device's USB speed color (foreground only).
+func usbSpeedConnector(device model.USBDevice, s string) string {
+	var hex string
+	switch device.Speed {
+	case "12":
+		hex = "#9e9e9e"
+	case "480":
+		hex = "#ffffff"
+	case "5000":
+		hex = "#005eb8"
+	case "10000":
+		hex = "#0baadf"
+	case "20000":
+		hex = "#00d6e6"
+	case "40000":
+		hex = "#54ffd6"
+	default:
+		return s
 	}
-	return fmt.Sprintf(" [%s]", label)
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(hex)).Render(s)
 }
 
 func formatUsbSpeed(device model.USBDevice) string {

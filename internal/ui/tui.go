@@ -322,16 +322,16 @@ func renderUSBDeviceTree(devices []model.USBDevice, startIdx int, selectedItem i
 	idx := startIdx
 	for i := range devices {
 		isLast := i == len(devices)-1
-		var connector, childIndent string
+		var corner, childIndent string
 		if isLast {
-			connector = "╰─ "
+			corner = "╰"
 			childIndent = indent + "   "
 		} else {
-			connector = "├─ "
+			corner = "├"
 			childIndent = indent + "│  "
 		}
 
-		content := indent + connector + formatUSBDevice(devices[i]) + formatUsbSpeedInline(devices[i])
+		content := indent + corner + usbSpeedConnector(devices[i], "─ ") + formatUSBDevice(devices[i])
 		var line string
 		if idx == selectedItem {
 			line = ">" + selectedStyle.Render(content)
