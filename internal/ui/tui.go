@@ -535,17 +535,17 @@ func ListPorts(typecDir string) {
 		fmt.Fprintf(os.Stderr, "Error loading ports: %v\n", err)
 		os.Exit(1)
 	}
-	for _, port := range ports {
-		fmt.Print(renderPortDetails(port))
-		fmt.Println()
-	}
 
 	standaloneUSBDevices := parser.LoadStandaloneUSBDevices(typecDir, ports)
-	if len(standaloneUSBDevices) > 0 {
-		fmt.Println("Other USB Devices")
-		lines, _ := renderUSBDeviceTree(standaloneUSBDevices, 0, -1, "")
-		for _, line := range lines {
-			fmt.Println(line)
+	items := buildItemList(ports, standaloneUSBDevices)
+
+	for _, item := range items {
+		if item.kind == kindPort {
+			fmt.Print(renderPortDetails(ports[item.portIdx]))
+			fmt.Println()
+		} else {
+			fmt.Print(renderUSBDevicePanel(*item.device))
+			fmt.Println()
 		}
 	}
 }
