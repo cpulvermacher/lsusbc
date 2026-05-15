@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
@@ -16,18 +17,27 @@ var (
 	powerModeCurrent1_5A = lipgloss.NewStyle().Foreground(lipgloss.Color("#fae470"))
 	powerModeUsb         = lipgloss.NewStyle().Foreground(lipgloss.Color("#6f453d"))
 
-	// USB 1.0
-	usbSpeed12 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#ffffff")).Foreground(lipgloss.Black)
-	// USB 2.0
-	usbSpeed480 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#000000")).Foreground(lipgloss.White)
-	// USB 3.0 / 3.1 gen1
-	usbSpeed5000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#005eb8")).Foreground(lipgloss.White)
-	// USB 3.1 gen2 / 3.2
-	usbSpeed10000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#0baadf")).Foreground(lipgloss.Black)
-	// USB 3.2
-	usbSpeed20000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#00d6e6")).Foreground(lipgloss.Black)
-	// USB 4.0 / Thunderbolt 3
-	usbSpeed40000 = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("#54ffd6")).Foreground(lipgloss.Black)
+	// Accent colors used for connector gradients and badge styles.
+	// USB 1.x — dim gray
+	usbAccent12 = lipgloss.Color("#808880")
+	// USB 2.0 — white
+	usbAccent480 = lipgloss.Color("#ffffff")
+	// USB 3.0 / 3.1 gen1 — Pantone 300 C (recommended by USB Standard)
+	usbAccent5000 = lipgloss.Color("#005eb8")
+	// USB 3.1 gen2 / 3.2 — teal blue (non-standard, used for ports by some manufacturers)
+	usbAccent10000 = lipgloss.Color("#0baadf")
+	// USB 3.2 — (non-standard, made up color)
+	usbAccent20000 = lipgloss.Color("#00d6e6")
+	// USB 4.0 / Thunderbolt 3 — (non-standard, made up color)
+	usbAccent40000 = lipgloss.Color("#54ffd6")
+
+	// Badge styles: USB 1.x/2.0 use black/white inversion; 3.0+ use accent as background.
+	usbSpeed12    = lipgloss.NewStyle().Bold(true).Background(usbAccent12).Foreground(lipgloss.Black)
+	usbSpeed480   = lipgloss.NewStyle().Bold(true).Background(lipgloss.Black).Foreground(usbAccent480)
+	usbSpeed5000  = lipgloss.NewStyle().Bold(true).Background(usbAccent5000).Foreground(lipgloss.White)
+	usbSpeed10000 = lipgloss.NewStyle().Bold(true).Background(usbAccent10000).Foreground(lipgloss.Black)
+	usbSpeed20000 = lipgloss.NewStyle().Bold(true).Background(usbAccent20000).Foreground(lipgloss.Black)
+	usbSpeed40000 = lipgloss.NewStyle().Bold(true).Background(usbAccent40000).Foreground(lipgloss.Black)
 )
 
 // FormatVoltage converts mV to human-readable format (e.g., "5V", "20V", "3.3-21V")
@@ -92,26 +102,38 @@ func formatPowerModeInline(pd *model.PowerDelivery, powerOperationMode string) s
 	}
 }
 
-// usbSpeedConnector colors s using the device's USB speed color (foreground only).
-func usbSpeedConnector(device model.USBDevice, s string) string {
-	var hex string
+func usbSpeedColor(device model.USBDevice) color.Color {
 	switch device.Speed {
 	case "12":
-		hex = "#9e9e9e"
+		return usbAccent12
 	case "480":
-		hex = "#ffffff"
+		return usbAccent480
 	case "5000":
-		hex = "#005eb8"
+		return usbAccent5000
 	case "10000":
-		hex = "#0baadf"
+		return usbAccent10000
 	case "20000":
-		hex = "#00d6e6"
+		return usbAccent20000
 	case "40000":
-		hex = "#54ffd6"
+		return usbAccent40000
 	default:
-		return s
+		return nil
 	}
-	return lipgloss.NewStyle().Foreground(lipgloss.Color(hex)).Render(s)
+}
+
+// gradientConnector returns n dashes fading from neutral into the device's speed color.
+func gradientConnector(device model.USBDevice, n int) string {
+	to := usbSpeedColor(device)
+	if to == nil {
+		return strings.Repeat("─", n)
+	}
+	neutral := lipgloss.Color("#cccccc")
+	steps := lipgloss.Blend1D(n+1, neutral, to)
+	var b strings.Builder
+	for _, c := range steps[1:] {
+		b.WriteString(lipgloss.NewStyle().Foreground(c).Render("─"))
+	}
+	return b.String()
 }
 
 func formatUsbSpeed(device model.USBDevice) string {
