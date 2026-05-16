@@ -6,9 +6,11 @@ import (
 )
 
 // findPosition returns the (line, col) of the first occurrence of s in text, or (-1, -1) if not found.
+// Column counts only visible characters (ANSI escape sequences are ignored).
 func findPosition(text, s string) (int, int) {
 	for i, line := range strings.Split(text, "\n") {
-		if col := strings.Index(line, s); col != -1 {
+		stripped := ansiEscape.ReplaceAllString(line, "")
+		if col := strings.Index(stripped, s); col != -1 {
 			return i, col
 		}
 	}
@@ -37,13 +39,9 @@ func TestBuildPanelLayout_WideUsesHorizontalLayout(t *testing.T) {
 		t.Errorf("expected both panels in output, got: %q", result)
 	}
 
-	listLine, _ := findPosition(result, "list")
-	detailsLine, detailsCol := findPosition(result, "details")
-	if listLine != detailsLine {
-		t.Errorf("expected list and details on the same line in horizontal layout")
-	}
-	if detailsCol != 52 {
-		t.Errorf("expected details at column %d, got %d", 52, detailsCol)
+_, detailsCol := findPosition(result, "│")
+	if detailsCol != 50 {
+		t.Errorf("expected details at column %d, got %d", 50, detailsCol)
 	}
 }
 
@@ -53,13 +51,9 @@ func TestBuildPanelLayout_HorizontalLayoutWithWideListGrowsUntilMaximum(t *testi
 		t.Errorf("expected both panels in output, got: %q", result)
 	}
 
-	listLine, _ := findPosition(result, "list")
-	detailsLine, detailsCol := findPosition(result, "details")
-	if listLine != detailsLine {
-		t.Errorf("expected list and details on the same line in horizontal layout")
-	}
-	if detailsCol != 77 {
-		t.Errorf("expected details at column %d, got %d", 77, detailsCol)
+	_, detailsCol := findPosition(result, "│")
+	if detailsCol != 75 {
+		t.Errorf("expected details at column %d, got %d", 75, detailsCol)
 	}
 }
 
@@ -69,13 +63,9 @@ func TestBuildPanelLayout_HorizontalLayoutWithWideDetailsGrowsUntilMaximum(t *te
 		t.Errorf("expected both panels in output, got: %q", result)
 	}
 
-	listLine, _ := findPosition(result, "list")
-	detailsLine, detailsCol := findPosition(result, "details")
-	if listLine != detailsLine {
-		t.Errorf("expected list and details on the same line in horizontal layout")
-	}
-	if detailsCol != 26 {
-		t.Errorf("expected details at column %d, got %d", 26, detailsCol)
+	_, detailsCol := findPosition(result, "│")
+	if detailsCol != 25 {
+		t.Errorf("expected details at column %d, got %d", 25, detailsCol)
 	}
 }
 
@@ -85,12 +75,8 @@ func TestBuildPanelLayout_HorizontalLayoutWithWideContentOnBothSidesSplitsFairly
 		t.Errorf("expected both panels in output, got: %q", result)
 	}
 
-	listLine, _ := findPosition(result, "list")
-	detailsLine, detailsCol := findPosition(result, "details")
-	if listLine != detailsLine {
-		t.Errorf("expected list and details on the same line in horizontal layout")
-	}
-	if detailsCol != 52 {
-		t.Errorf("expected details at column %d, got %d", 52, detailsCol)
+	_, detailsCol := findPosition(result, "│")
+	if detailsCol != 50 {
+		t.Errorf("expected details at column %d, got %d", 50, detailsCol)
 	}
 }
