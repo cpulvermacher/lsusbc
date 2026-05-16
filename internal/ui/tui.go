@@ -207,7 +207,7 @@ func (m UIModel) View() tea.View {
 
 	}
 
-	content := buildPanelLayout(m, listContent, detailsContent)
+	content := buildPanelLayout(m.termWidth, m.termHeight, listContent, detailsContent)
 
 	// 3: status bar
 	bar := renderStatusBar(m)
@@ -278,40 +278,6 @@ func resolveSelection(items []listItem, selectedID string, prevIdx int) int {
 		}
 	}
 	return max(0, min(prevIdx, len(items)-1))
-}
-
-// adjusts panel orientation and size based on terminal size and list width
-func buildPanelLayout(m UIModel, listContent string, detailsContent string) string {
-	detailsStyleBase := lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), false, false, false, true).
-		BorderForeground(lipgloss.Color("#8e8e8e")).
-		Margin(0, 1).
-		Padding(0, 1)
-
-	if m.termWidth < 70 {
-		// narrow window => vertical layout
-		listStyle := lipgloss.NewStyle().Width(m.termWidth)
-		detailsStyle := detailsStyleBase.Width(m.termWidth)
-
-		listPanel := listStyle.Render(listContent)
-		detailsPanel := detailsStyle.Render(detailsContent)
-
-		content := lipgloss.JoinVertical(lipgloss.Top, listPanel, detailsPanel)
-		// reserve status bar line
-		return lipgloss.NewStyle().Width(m.termWidth).Height(m.termHeight - 1).Render(content)
-	} else {
-		// horizontal layout
-		actualListWidth := lipgloss.Width(listContent)
-		listWidth := min(actualListWidth, m.termWidth*4/7)
-
-		listStyle := lipgloss.NewStyle().Width(listWidth).Height(m.termHeight - 1)
-		detailsStyle := detailsStyleBase.Width(m.termWidth - listWidth).Height(m.termHeight - 1)
-
-		listPanel := listStyle.Render(listContent)
-		detailsPanel := detailsStyle.Render(detailsContent)
-
-		return lipgloss.JoinHorizontal(lipgloss.Top, listPanel, detailsPanel)
-	}
 }
 
 func portDisplayName(name string) string {
