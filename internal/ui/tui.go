@@ -240,10 +240,6 @@ func renderStatusBar(m UIModel) string {
 		parts = append(parts, bat)
 	}
 
-	if m.sysfsDir != "/sys" {
-		parts = append(parts, "sysfs: "+m.sysfsDir)
-	}
-
 	text := strings.Join(parts, "  |  ")
 	if m.termWidth > 0 {
 		text = statusBar.Width(m.termWidth).Render(text)
