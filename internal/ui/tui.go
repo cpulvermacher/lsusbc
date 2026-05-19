@@ -58,6 +58,9 @@ type UIModel struct {
 	standaloneUSBDevices []model.USBDevice
 	items                []listItem
 	battery              *model.BatteryInfo
+
+	// recomputed on resize or refresh, not on selection change, to keep layout stable
+	cachedListWidth int
 }
 
 func InitializeModel(sysfsDir string) UIModel {
@@ -105,6 +108,9 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
+		if m.ports != nil {
+			m.cachedListWidth = computeListWidth(m.termWidth, renderListContent(m), renderDetailsContent(m))
+		}
 	}
 
 	if m.ports == nil {
@@ -149,19 +155,7 @@ func moveSelection(m UIModel, increment int) tea.Model {
 	return m
 }
 
-func (m UIModel) View() tea.View {
-	var view tea.View
-	view.AltScreen = true
-
-	if m.ports == nil {
-		view.SetContent("Loading...")
-		return view
-	} else if len(m.ports) == 0 && len(m.standaloneUSBDevices) == 0 {
-		view.SetContent("No USB devices found")
-		return view
-	}
-
-	// 1: list panel
+func renderListContent(m UIModel) string {
 	var listContent string
 	if len(m.ports) > 0 {
 		listContent += " USB-C Ports\n"
@@ -194,20 +188,36 @@ func (m UIModel) View() tea.View {
 			listContent += line + "\n"
 		}
 	}
+	return listContent
+}
 
-	// 2: details panel
-	detailsContent := ""
-	if len(m.items) > 0 {
-		selected := m.items[m.selectedItem]
-		if selected.kind == kindPort {
-			detailsContent = renderPortDetails(m.ports[selected.portIdx])
-		} else {
-			detailsContent = renderUSBDevicePanel(*selected.device)
-		}
+func renderDetailsContent(m UIModel) string {
+	if len(m.items) == 0 {
+		return ""
+	}
+	selected := m.items[m.selectedItem]
+	if selected.kind == kindPort {
+		return renderPortDetails(m.ports[selected.portIdx])
+	}
+	return renderUSBDevicePanel(*selected.device)
+}
 
+func (m UIModel) View() tea.View {
+	var view tea.View
+	view.AltScreen = true
+
+	if m.ports == nil {
+		view.SetContent("Loading...")
+		return view
+	} else if len(m.ports) == 0 && len(m.standaloneUSBDevices) == 0 {
+		view.SetContent("No USB devices found")
+		return view
 	}
 
-	content := buildPanelLayout(m.termWidth, m.termHeight, listContent, detailsContent)
+	listContent := renderListContent(m)
+	detailsContent := renderDetailsContent(m)
+
+	content := buildPanelLayout(m.termWidth, m.termHeight, m.cachedListWidth, listContent, detailsContent)
 
 	// 3: status bar
 	bar := renderStatusBar(m)
@@ -264,6 +274,7 @@ func refresh(m UIModel) UIModel {
 		m.selectedID = m.items[m.selectedItem].id
 	}
 	m.battery = parser.LoadBatteryInfo(m.sysfsDir)
+	m.cachedListWidth = computeListWidth(m.termWidth, renderListContent(m), renderDetailsContent(m))
 	return m
 }
 
