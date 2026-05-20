@@ -27,6 +27,8 @@ var (
 	batteryNormal   = lipgloss.NewStyle().Foreground(lipgloss.Color("#e0e400"))
 	batteryLow      = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe7400"))
 	batteryCritical = lipgloss.NewStyle().Foreground(lipgloss.Color("#fe4000"))
+
+	sectionDividerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#8e8e8e"))
 )
 
 const startIndent = ""
@@ -409,7 +411,8 @@ func getFriendlyDeviceName(partner *model.Partner) string {
 func sectionDivider(label string) string {
 	const totalWidth = 26
 	dashes := max(totalWidth-3-len(label)-1, 2)
-	return fmt.Sprintf("\n── %s %s\n", label, strings.Repeat("─", dashes))
+	line := fmt.Sprintf("── %s %s", label, strings.Repeat("─", dashes))
+	return "\n" + sectionDividerStyle.Render(line) + "\n"
 }
 
 // renderPortDetails formats all Port model fields for display
