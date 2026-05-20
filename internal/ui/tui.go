@@ -406,87 +406,86 @@ func getFriendlyDeviceName(partner *model.Partner) string {
 	return "USB Device"
 }
 
+func sectionDivider(label string) string {
+	const totalWidth = 26
+	dashes := max(totalWidth-3-len(label)-1, 2)
+	return fmt.Sprintf("\n── %s %s\n", label, strings.Repeat("─", dashes))
+}
+
 // renderPortDetails formats all Port model fields for display
 func renderPortDetails(port model.Port) string {
 	var content string
 
-	// Port basic info
-	content += fmt.Sprintf("Port: %s\n", portDisplayName(port.Name))
-	content += fmt.Sprintf("Data Role: %s\n", port.DataRole)
-	content += fmt.Sprintf("Power Role: %s\n", port.PowerRole)
-	content += fmt.Sprintf("Power Operation Mode: %s\n\n", port.PowerOperationMode)
-
-	// Cable info
-	if port.Cable != nil {
-		cable := port.Cable
-		content += "Cable:\n"
-		if cable.Type != "" && cable.Type != "undefined" {
-			content += fmt.Sprintf("  Type: %s\n", cable.Type)
-		}
-		if cable.PlugType != "" {
-			content += fmt.Sprintf("  Plug: %s\n", cable.PlugType)
-		}
-		if len(cable.AlternateModes) > 0 {
-			content += "  Alternate Modes:\n"
-			for _, mode := range cable.AlternateModes {
-				content += formatAlternateMode(mode)
-			}
-		}
-		content += "\n"
-	}
-
-	// Partner info
+	// Connected device
 	if port.Partner == nil {
 		content += fmt.Sprintf("Connected Device: %s\n", inactiveStyle.Render("(no device connected)"))
 	} else {
 		partner := port.Partner
-		content += fmt.Sprintf("Connected Device: %s\n", partner.Name)
+		content += fmt.Sprintf("Connected Device: %s\n", getFriendlyDeviceName(partner))
 		if pd := partner.PowerDelivery; pd != nil {
-			content += fmt.Sprintf("  Power: USB Power Delivery %s\n", pd.Revision)
+			pdLabel := "USB Power Delivery " + pd.Revision
 			if pd.ACPowered {
-				content += "  Power Source: AC Powered\n"
+				pdLabel += ", AC Powered"
 			}
-
-			// Source capabilities
+			content += fmt.Sprintf("  Power: %s\n", pdLabel)
 			if len(pd.SourceCapabilities) > 0 {
-				content += fmt.Sprintf("  Charger Capabilities:  %dW\n", MaxWatts(pd.SourceCapabilities))
+				content += fmt.Sprintf("  Charger: %dW max\n", MaxWatts(pd.SourceCapabilities))
 				for i, cap := range pd.SourceCapabilities {
 					content += fmt.Sprintf("    [%d] %s @ %s\n", i, FormatVoltage(cap), FormatCurrent(cap))
 				}
-				content += "\n"
 			}
-
-			// Sink capabilities
 			if len(pd.SinkCapabilities) > 0 {
 				content += "  Sink Capabilities:\n"
 				for i, cap := range pd.SinkCapabilities {
 					content += fmt.Sprintf("    [%d] %s @ %s\n", i, FormatVoltage(cap), FormatCurrent(cap))
 				}
-				content += "\n"
 			}
 		} else {
 			switch port.PowerOperationMode {
 			case "default":
-				content += "  Power: Default USB Power (5V, ≤500mA/900mA, ≤2.5W/4.5W)\n\n"
+				content += "  Power: Default USB Power (5V, ≤500mA/900mA, ≤2.5W/4.5W)\n"
 			case "1.5A":
-				content += "  Power: USB Type-C Current (5V @ 1.5A, 7.5W)\n\n"
+				content += "  Power: USB Type-C Current (5V @ 1.5A, 7.5W)\n"
 			case "3.0A":
-				content += "  Power: USB Type-C Current (5V @ 3A, 15W)\n\n"
+				content += "  Power: USB Type-C Current (5V @ 3A, 15W)\n"
 			}
 		}
 		if partner.AccessoryMode != "none" {
-			content += fmt.Sprintf("  Accessory Mode: %s\n\n", partner.AccessoryMode)
+			content += fmt.Sprintf("  Accessory: %s\n", partner.AccessoryMode)
 		}
-
-		// Alternate modes
 		if len(partner.AlternateModes) > 0 {
 			content += "  Alternate Modes:\n"
 			for _, mode := range partner.AlternateModes {
 				content += formatAlternateMode(mode)
 			}
-			content += "\n"
 		}
+	}
 
+	// Port section
+	content += sectionDivider("Port")
+	content += fmt.Sprintf("%s  |  %s  |  %s  |  %s\n",
+		portDisplayName(port.Name), port.DataRole, port.PowerRole, port.PowerOperationMode)
+
+	// Cable section
+	if port.Cable != nil {
+		cable := port.Cable
+		content += sectionDivider("Cable")
+		var cableParts []string
+		if cable.Type != "" && cable.Type != "undefined" {
+			cableParts = append(cableParts, cable.Type)
+		}
+		if cable.PlugType != "" {
+			cableParts = append(cableParts, cable.PlugType)
+		}
+		if len(cableParts) > 0 {
+			content += strings.Join(cableParts, ", ") + "\n"
+		}
+		if len(cable.AlternateModes) > 0 {
+			content += "Alternate Modes:\n"
+			for _, mode := range cable.AlternateModes {
+				content += formatAlternateMode(mode)
+			}
+		}
 	}
 
 	return content
@@ -494,27 +493,20 @@ func renderPortDetails(port model.Port) string {
 
 func renderUSBDevicePanel(device model.USBDevice) string {
 	var s string
-	s += fmt.Sprintf("USB Device: %s\n", device.DeviceID)
-	if device.Manufacturer != "" {
-		s += fmt.Sprintf("Manufacturer: %s\n", device.Manufacturer)
-	}
-	if device.Product != "" {
-		s += fmt.Sprintf("Product: %s\n", device.Product)
-	}
+
+	// Identity
+	s += formatUSBDevice(device) + "\n"
 	if device.Serial != "" {
 		s += fmt.Sprintf("Serial: %s\n", device.Serial)
 	}
-	if device.IDVendor != "" {
-		s += fmt.Sprintf("Vendor ID: %s\n", device.IDVendor)
-	}
-	if device.IDProduct != "" {
-		s += fmt.Sprintf("Product ID: %s\n", device.IDProduct)
+
+	// Connection section
+	s += sectionDivider("Connection")
+	if device.Speed != "" {
+		s += fmt.Sprintf("Speed: %s\n", formatUsbSpeed(device))
 	}
 	if device.Version != "" {
 		s += fmt.Sprintf("USB Version: %s\n", device.Version)
-	}
-	if device.Speed != "" {
-		s += fmt.Sprintf("Speed: %s\n", formatUsbSpeed(device))
 	}
 	if device.MaxPower != "" {
 		s += fmt.Sprintf("Max Power: %s\n", device.MaxPower)
@@ -522,6 +514,14 @@ func renderUSBDevicePanel(device model.USBDevice) string {
 	if len(device.Drivers) > 0 {
 		s += fmt.Sprintf("Driver: %s\n", strings.Join(device.Drivers, ", "))
 	}
+
+	// IDs section
+	s += sectionDivider("IDs")
+	if device.IDVendor != "" || device.IDProduct != "" {
+		s += fmt.Sprintf("Vendor: %s  Product: %s\n", device.IDVendor, device.IDProduct)
+	}
+	s += fmt.Sprintf("Device ID: %s\n", device.DeviceID)
+
 	return s
 }
 
