@@ -2,4 +2,4 @@
 
 ## [0.0.1] (pre-release)
 
-- Initial release
+- Test release build
