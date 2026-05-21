@@ -105,7 +105,8 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case RefreshTick:
-		return refresh(m), doTick()
+		m = refresh(m)
+		return m, doTick()
 
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
@@ -116,7 +117,9 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.ports == nil {
-		return refresh(m), doTick()
+		m = refresh(m)
+		m.cachedListWidth = computeListWidth(m.termWidth, renderListContent(m), renderDetailsContent(m))
+		return m, doTick()
 	}
 
 	return m, nil
@@ -276,7 +279,6 @@ func refresh(m UIModel) UIModel {
 		m.selectedID = m.items[m.selectedItem].id
 	}
 	m.battery = parser.LoadBatteryInfo(m.sysfsDir)
-	m.cachedListWidth = computeListWidth(m.termWidth, renderListContent(m), renderDetailsContent(m))
 	return m
 }
 
