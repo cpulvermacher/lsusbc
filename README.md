@@ -6,22 +6,20 @@ A CLI utility to display USB Type-C device and USB Power Delivery (PD) informati
 
 ## Features
 
-- Display connected USB-C and USB devices with visual representation
+- Display connected USB-C and USB devices in a tree view
 - Show power information (max power, current/voltage capabilities, Power Delivery version, energy flow)
 - Details on connection speed, manufacturer info, driver, etc.
 - Show alternate modes (DisplayPort, Thunderbolt, etc.)
 
 ## Installation
 
+Install via
+
 ```bash
 go install github.com/cpulvermacher/lsusbc@latest
 ```
 
-Or build from source:
-
-```bash
-go build
-```
+or downoad a pre-built binary from the [Releases](https://github.com/cpulvermacher/lsusbc/releases) page.
 
 ## Usage
 
@@ -34,11 +32,11 @@ lsusbc
 Or use it like `lsusb` for quick one-shot output:
 
 ```bash
-lsusbc -l        # compact tree overview
+lsusbc -l        # tree overview
 lsusbc -v        # full details for every device
 ```
 
-When stdout is not a terminal (e.g. piping to `grep`), list mode is used automatically.
+When stdout is not a terminal (e.g. piping to `grep`), tree overview is used automatically.
 
 ### TUI keyboard shortcuts
 
@@ -64,9 +62,8 @@ Create a tarball using the displayed command.
 # Alternatives
 
 - Cyme (but more for other USB devices) https://github.com/tuna-f1sh/cyme
-- https://github.com/doug-gilbert/lsucpd
-- https://github.com/darrylmorley/whatcable - Shows info about USB-C cables, Mac OS only
-
+- lsucpd (focus on Power Delivery) - https://github.com/doug-gilbert/lsucpd
+- whatcable (Shows info about USB-C cables, only Mac OS) - https://github.com/darrylmorley/whatcable
 # References
 
 - https://www.kernel.org/doc/html/latest/driver-api/usb/typec.html

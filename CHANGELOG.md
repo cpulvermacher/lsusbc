@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.1.0]
+
+- Initial release
+
 ## [0.0.2] (pre-release)
 
 - Fix release build
