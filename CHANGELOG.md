@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.1.1]
+
+- Create reproducible, fully static binaries
+
 ## [0.1.0]
 
 - Initial release
