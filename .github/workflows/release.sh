@@ -32,6 +32,5 @@ echo "Creating GitHub release..."
 gh release create "${TAG}" \
   --title "${TAG}" \
   $RELEASE_OPTS \
-  ./lsusb-linux-* \
+  ./lsusbc-linux-* \
   -n "$CHANGELOG"
-
