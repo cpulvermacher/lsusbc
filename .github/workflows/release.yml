@@ -24,8 +24,8 @@ jobs:
         go mod tidy && git diff --exit-code || (echo "go.mod file is not clean. Run 'go mod tidy' locally and commit the changes" && exit 1)
     - name: Build binaries
       run: |
-        GOOS=linux GOARCH=amd64 go build -o lsusbc-linux-amd64 .
-        GOOS=linux GOARCH=arm64 go build -o lsusbc-linux-arm64 .
+        GOOS=linux GOARCH=amd64 go build -trimpath -o lsusbc-linux-amd64 .
+        GOOS=linux GOARCH=arm64 go build -trimpath -o lsusbc-linux-arm64 .
 
     - name: Release
       env:
