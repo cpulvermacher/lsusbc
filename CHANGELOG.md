@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.2.0]
+
+- Hide power delivery info in tree view for devices receiving power
+- Show current battery drain/charge if available
+
 ## [0.1.1]
 
 - Create reproducible, fully static binaries
