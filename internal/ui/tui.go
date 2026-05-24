@@ -353,17 +353,19 @@ func renderUSBDeviceTree(devices []model.USBDevice, startIdx int, selectedItem i
 
 // renderConnection renders a port-partner connection
 func renderConnection(port model.Port) string {
-	capabilities := formatPowerModeInline(port.Partner.PowerDelivery, port.PowerOperationMode)
-
-	var arrow string
+	var arrow, capabilities string
 	if port.PowerRole == "sink" {
 		arrow = powerArrowCharging.Render("<==󱐋===")
+		capabilities = formatPowerModeInline(port.Partner.PowerDelivery, port.PowerOperationMode)
 	} else {
 		arrow = "======>"
 	}
 
 	deviceName := getFriendlyDeviceName(port.Partner)
-	return fmt.Sprintf("%s %s  %s", arrow, deviceName, capabilities)
+	if capabilities != "" {
+		return fmt.Sprintf("%s %s  %s", arrow, deviceName, capabilities)
+	}
+	return fmt.Sprintf("%s %s", arrow, deviceName)
 }
 
 // formatUSBDevice formats a USB device name
