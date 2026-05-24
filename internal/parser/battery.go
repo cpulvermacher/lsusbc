@@ -25,10 +25,12 @@ func LoadBatteryInfo(sysfsDir string) *model.BatteryInfo {
 		if err != nil {
 			continue
 		}
+		powerNow, _ := strconv.Atoi(readFile(filepath.Join(dir, "power_now")))
 		return &model.BatteryInfo{
 			Capacity:      capacity,
 			CapacityLevel: readFile(filepath.Join(dir, "capacity_level")),
 			Status:        readFile(filepath.Join(dir, "status")),
+			PowerNow:      powerNow,
 		}
 	}
 	return nil

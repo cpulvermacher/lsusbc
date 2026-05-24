@@ -3,6 +3,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -237,6 +238,15 @@ func renderStatusBar(m UIModel) string {
 
 	if m.battery != nil && m.battery.CapacityLevel != "" && m.battery.CapacityLevel != "Unknown" {
 		bat := fmt.Sprintf("Battery: %d%%", m.battery.Capacity)
+		if m.battery.PowerNow != 0 {
+			watts := int(math.Round(float64(m.battery.PowerNow) / 1_000_000))
+			switch m.battery.Status {
+			case "Discharging":
+				bat += fmt.Sprintf(" ▼%dW", watts)
+			default:
+				bat += fmt.Sprintf(" ▲%dW", watts)
+			}
+		}
 		switch m.battery.Status {
 		case "Discharging":
 			switch m.battery.CapacityLevel {

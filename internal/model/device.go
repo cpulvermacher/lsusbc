@@ -58,6 +58,7 @@ type BatteryInfo struct {
 	Capacity      int    // Battery level in percent
 	CapacityLevel string // Unknown, Critical, Low, Normal, High, Full
 	Status        string // Charging, Discharging, Full, Not charging, Unknown
+	PowerNow      int    // Current power flow in microwatts (0 if unavailable)
 }
 
 type PowerCapability struct {
