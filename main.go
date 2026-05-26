@@ -10,11 +10,19 @@ import (
 	"github.com/cpulvermacher/lsusbc/internal/ui"
 )
 
+var version = "dev"
+
 func main() {
 	sysfsDir := flag.String("d", "/sys", "sysfs directory")
 	listFlag := flag.Bool("l", false, "list devices and exit")
 	verboseFlag := flag.Bool("v", false, "include full device details (implies -l)")
+	versionFlag := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(version)
+		return
+	}
 
 	if flag.NArg() > 0 {
 		*sysfsDir = flag.Arg(0)
