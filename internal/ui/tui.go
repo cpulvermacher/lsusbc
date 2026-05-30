@@ -446,10 +446,7 @@ func renderPortDetails(port model.Port) string {
 			}
 			content += fmt.Sprintf("  Power: %s\n", pdLabel)
 			if len(pd.SourceCapabilities) > 0 {
-				content += fmt.Sprintf("  Charger: %dW max\n", MaxWatts(pd.SourceCapabilities))
-				for i, cap := range pd.SourceCapabilities {
-					content += fmt.Sprintf("    [%d] %s @ %s\n", i, FormatVoltage(cap), FormatCurrent(cap))
-				}
+				content += formatSourceCapabilities(pd.SourceCapabilities, port.SinkCapabilities)
 			}
 			if len(pd.SinkCapabilities) > 0 {
 				content += "  Sink Capabilities:\n"

@@ -63,6 +63,52 @@ func parsePDDirectories(partnerDir string) *model.PowerDelivery {
 	return pd
 }
 
+// parseSinkCapabilities parses sink PDOs, capturing the voltage (fixed supply) or
+// voltage range (battery/variable/programmable supply) each one covers.
+//
+// Unlike parseCapabilities (source PDOs), sink PDOs advertise operational current/power
+// rather than maximum_current, so this only requires voltage information. Returns nil
+// if the directory is missing. Used for the local port's own sink capabilities.
+func parseSinkCapabilities(capsDir string) []model.PowerCapability {
+	entries, err := os.ReadDir(capsDir)
+	if err != nil {
+		return nil
+	}
+
+	var capabilities []model.PowerCapability
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		capDir := filepath.Join(capsDir, name)
+
+		switch {
+		case strings.HasSuffix(name, ":fixed_supply"):
+			voltage, err := parseMilliValue(readFile(filepath.Join(capDir, "voltage")))
+			if err != nil {
+				continue
+			}
+			capabilities = append(capabilities, model.PowerCapability{Voltage: voltage})
+		case strings.HasSuffix(name, ":battery"),
+			strings.HasSuffix(name, ":variable_supply"),
+			strings.HasSuffix(name, ":programmable_supply"):
+			minVoltage, err1 := parseMilliValue(readFile(filepath.Join(capDir, "minimum_voltage")))
+			maxVoltage, err2 := parseMilliValue(readFile(filepath.Join(capDir, "maximum_voltage")))
+			if err1 != nil || err2 != nil {
+				continue
+			}
+			capabilities = append(capabilities, model.PowerCapability{
+				Programmable:   strings.HasSuffix(name, ":programmable_supply"),
+				MinimumVoltage: minVoltage,
+				MaximumVoltage: maxVoltage,
+			})
+		}
+	}
+
+	return capabilities
+}
+
 // parseCapabilities parses PD capabilities from a directory
 func parseCapabilities(capsDir string) ([]model.PowerCapability, error) {
 	entries, err := os.ReadDir(capsDir)

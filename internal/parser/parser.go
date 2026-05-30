@@ -54,6 +54,10 @@ func parsePort(portDir string) (*model.Port, error) {
 	port.PowerRole = extractActiveRole(readFile(filepath.Join(portDir, "power_role")))
 	port.PowerOperationMode = readFile(filepath.Join(portDir, "power_operation_mode"))
 
+	// Parse this port's own sink capabilities from its usb_power_delivery object.
+	// The port exposes a "usb_power_delivery" symlink to its pdN directory.
+	port.SinkCapabilities = parseSinkCapabilities(filepath.Join(portDir, "usb_power_delivery", "sink-capabilities"))
+
 	// Check for cable
 	cableDir := portDir + "-cable"
 	if _, err := os.Stat(cableDir); err == nil {

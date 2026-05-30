@@ -8,6 +8,10 @@ type Port struct {
 	PowerOperationMode string // "default", "1.5A", "3.0A", or "usb_power_delivery"
 	Partner            *Partner
 	Cable              *Cable
+	// SinkCapabilities are this local port's own sink PDOs (the voltages/ranges it is
+	// willing to consume), read from its usb_power_delivery object. Used to determine
+	// which of a partner's source capabilities can actually be negotiated. Empty if unknown.
+	SinkCapabilities []PowerCapability
 }
 
 type Cable struct {
@@ -68,4 +72,32 @@ type PowerCapability struct {
 	Programmable   bool
 	MinimumVoltage int // in mV
 	MaximumVoltage int // in mV
+}
+
+// VoltageRange returns the inclusive voltage interval (mV) this capability covers.
+// A fixed supply covers a single voltage; programmable/variable/battery supplies
+// cover [MinimumVoltage, MaximumVoltage].
+func (pc PowerCapability) VoltageRange() (minV, maxV int) {
+	if pc.MaximumVoltage > 0 {
+		return pc.MinimumVoltage, pc.MaximumVoltage
+	}
+	return pc.Voltage, pc.Voltage
+}
+
+// SourceCapUsable reports whether a sink described by sinkCaps could consume power
+// from the given source capability. Per the USB Power Delivery spec a sink may only
+// request a source PDO at a voltage it has advertised it can sink, so the source PDO
+// is usable iff its voltage range overlaps any sink PDO's voltage range.
+//
+// This predicts what is negotiable; it does not reflect the PDO actually selected,
+// which sysfs does not expose. Returns false when sinkCaps is empty (unknown).
+func SourceCapUsable(sourceCap PowerCapability, sinkCaps []PowerCapability) bool {
+	srcLo, srcHi := sourceCap.VoltageRange()
+	for _, sc := range sinkCaps {
+		lo, hi := sc.VoltageRange()
+		if srcLo <= hi && lo <= srcHi {
+			return true
+		}
+	}
+	return false
 }

@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/cpulvermacher/lsusbc/internal/model"
 )
 
 func makeCapDir(t *testing.T, capsDir, name string, files map[string]string) {
@@ -176,6 +178,54 @@ func TestParseCapabilities_MissingDir(t *testing.T) {
 	_, err := parseCapabilities("/nonexistent/path")
 	if err == nil {
 		t.Error("expected error for missing directory, got nil")
+	}
+}
+
+func TestParseSinkCapabilities(t *testing.T) {
+	capsDir := t.TempDir()
+	// Local sink PDOs advertise operational_current/power rather than maximum_current.
+	makeCapDir(t, capsDir, "1:fixed_supply", map[string]string{
+		"voltage":             "5000mV\n",
+		"operational_current": "100mA\n",
+	})
+	makeCapDir(t, capsDir, "2:fixed_supply", map[string]string{
+		"voltage":             "20000mV\n",
+		"operational_current": "3000mA\n",
+	})
+	makeCapDir(t, capsDir, "3:battery", map[string]string{
+		"minimum_voltage":   "5000mV\n",
+		"maximum_voltage":   "20000mV\n",
+		"operational_power": "2500mW\n",
+	})
+	makeCapDir(t, capsDir, "4:programmable_supply", map[string]string{
+		"minimum_voltage": "3300mV\n",
+		"maximum_voltage": "11000mV\n",
+	})
+
+	caps := parseSinkCapabilities(capsDir)
+	if len(caps) != 4 {
+		t.Fatalf("got %d caps, want 4", len(caps))
+	}
+
+	byVolt := map[int]model.PowerCapability{}
+	for _, c := range caps {
+		lo, hi := c.VoltageRange()
+		byVolt[lo*100000+hi] = c
+	}
+	if c, ok := byVolt[5000*100000+5000]; !ok || c.Voltage != 5000 {
+		t.Errorf("missing 5V fixed sink PDO: %+v", caps)
+	}
+	if c, ok := byVolt[5000*100000+20000]; !ok || c.MinimumVoltage != 5000 || c.MaximumVoltage != 20000 || c.Programmable {
+		t.Errorf("missing 5-20V battery sink PDO (range, not programmable): %+v", caps)
+	}
+	if c, ok := byVolt[3300*100000+11000]; !ok || !c.Programmable {
+		t.Errorf("missing 3.3-11V programmable sink PDO: %+v", caps)
+	}
+}
+
+func TestParseSinkCapabilities_MissingDir(t *testing.T) {
+	if caps := parseSinkCapabilities("/nonexistent/path"); caps != nil {
+		t.Errorf("got %v, want nil for missing directory", caps)
 	}
 }
 

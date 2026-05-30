@@ -67,6 +67,63 @@ func MaxWatts(caps []model.PowerCapability) int {
 	return max
 }
 
+// maxUsableWatts returns the highest wattage among source caps the local sink can use.
+func maxUsableWatts(sourceCaps, sinkCaps []model.PowerCapability) int {
+	max := 0
+	for _, c := range sourceCaps {
+		if model.SourceCapUsable(c, sinkCaps) {
+			if w := Watts(c); w > max {
+				max = w
+			}
+		}
+	}
+	return max
+}
+
+// maxSinkVoltage returns the highest voltage (mV) the local sink advertises it can accept.
+func maxSinkVoltage(sinkCaps []model.PowerCapability) int {
+	max := 0
+	for _, c := range sinkCaps {
+		if _, hi := c.VoltageRange(); hi > max {
+			max = hi
+		}
+	}
+	return max
+}
+
+// formatSourceCapabilities renders a partner's source PDOs for the details panel.
+// When the local port's sink capabilities are known, PDOs that cannot actually be
+// negotiated are dimmed (per the PD spec, a sink may only request a voltage it advertised
+// it can sink); usable PDOs are shown normally. The header also notes the usable maximum
+// power when it is below the offered maximum.
+func formatSourceCapabilities(sourceCaps, sinkCaps []model.PowerCapability) string {
+	const capColWidth = 12
+	known := len(sinkCaps) > 0
+
+	header := fmt.Sprintf("  Charger: %dW max", MaxWatts(sourceCaps))
+	if known {
+		if usable := maxUsableWatts(sourceCaps, sinkCaps); usable < MaxWatts(sourceCaps) {
+			header += fmt.Sprintf(" · %dW usable", usable)
+		}
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s\n", header)
+	for _, c := range sourceCaps {
+		desc := fmt.Sprintf("%s @ %s", FormatVoltage(c), FormatCurrent(c))
+		body := fmt.Sprintf("%-*s %dW", capColWidth, desc, Watts(c))
+
+		if known && !model.SourceCapUsable(c, sinkCaps) {
+			if lo, _ := c.VoltageRange(); lo > maxSinkVoltage(sinkCaps) {
+				body += fmt.Sprintf("  (sink max %s)", formatMilliVolts(maxSinkVoltage(sinkCaps)))
+			}
+			body = inactiveStyle.Render(body)
+		}
+		fmt.Fprintf(&b, "    %s\n", body)
+	}
+	return b.String()
+}
+
 func formatMilliVolts(mv int) string {
 	if mv%1000 == 0 {
 		return fmt.Sprintf("%dV", mv/1000)

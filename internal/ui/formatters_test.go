@@ -2,6 +2,7 @@ package ui
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/cpulvermacher/lsusbc/internal/model"
@@ -107,6 +108,69 @@ func TestMaxWatts(t *testing.T) {
 func TestMaxWatts_Empty(t *testing.T) {
 	if got := MaxWatts(nil); got != 0 {
 		t.Errorf("MaxWatts(nil) = %d, want 0", got)
+	}
+}
+
+func TestFormatSourceCapabilities_UnknownSink(t *testing.T) {
+	// No local sink caps: plain rows, no glyph, no "usable" summary.
+	source := []model.PowerCapability{
+		{Voltage: 5000, MaximumCurrent: 3000},
+		{Voltage: 20000, MaximumCurrent: 5000},
+	}
+	got := stripANSI(formatSourceCapabilities(source, nil))
+	want := "  Charger: 100W max\n" +
+		"    5V @ 3A      15W\n" +
+		"    20V @ 5A     100W\n"
+	if got != want {
+		t.Errorf("got:\n%q\nwant:\n%q", got, want)
+	}
+}
+
+func TestFormatSourceCapabilities_MixedUsable(t *testing.T) {
+	// Charger offers 5/9/20/28V; local sink accepts only 5V and 20V fixed.
+	source := []model.PowerCapability{
+		{Voltage: 5000, MaximumCurrent: 3000},
+		{Voltage: 9000, MaximumCurrent: 3000},
+		{Voltage: 20000, MaximumCurrent: 3400},
+		{Voltage: 28000, MaximumCurrent: 3500},
+	}
+	sink := []model.PowerCapability{{Voltage: 5000}, {Voltage: 20000}}
+
+	raw := formatSourceCapabilities(source, sink)
+	got := stripANSI(raw)
+	want := "  Charger: 98W max · 68W usable\n" +
+		"    5V @ 3A      15W\n" +
+		"    9V @ 3A      27W\n" + // gap between sink voltages: no reason
+		"    20V @ 3.4A   68W\n" +
+		"    28V @ 3.5A   98W  (sink max 20V)\n" // above sink max: reason shown
+	if got != want {
+		t.Errorf("got:\n%q\nwant:\n%q", got, want)
+	}
+
+	// Usable rows are shown normally; only unusable rows are dimmed.
+	if !strings.Contains(raw, inactiveStyle.Render("9V @ 3A      27W")) {
+		t.Error("unusable 9V row should be rendered dimmed")
+	}
+	if strings.Contains(raw, inactiveStyle.Render("5V @ 3A      15W")) {
+		t.Error("usable 5V row should not be dimmed")
+	}
+}
+
+func TestFormatSourceCapabilities_AllUsable(t *testing.T) {
+	// Local sink has a battery range covering everything: no "usable" summary, all ✓.
+	source := []model.PowerCapability{
+		{Voltage: 5000, MaximumCurrent: 3000},
+		{Voltage: 9000, MaximumCurrent: 3000},
+		{Voltage: 20000, MaximumCurrent: 3400},
+	}
+	sink := []model.PowerCapability{{Voltage: 5000}, {MinimumVoltage: 5000, MaximumVoltage: 20000}}
+
+	got := stripANSI(formatSourceCapabilities(source, sink))
+	if strings.Contains(got, "usable") {
+		t.Errorf("did not expect a usable summary when all caps are usable, got:\n%s", got)
+	}
+	if strings.Contains(got, "sink max") {
+		t.Errorf("did not expect any unusable rows, got:\n%s", got)
 	}
 }
 
