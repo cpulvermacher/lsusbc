@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.0]
+
+- Dim unusable charger power profiles
+
 ## [0.2.0]
 
 - Hide power delivery info in tree view for devices receiving power
