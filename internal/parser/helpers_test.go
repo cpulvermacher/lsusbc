@@ -61,7 +61,7 @@ func TestStripControl(t *testing.T) {
 		{"a\x1bb", "ab"},                     // ESC
 		{"a\x07b", "ab"},                     // BEL
 		{"a\x7fb", "ab"},                     // DEL
-		{"ab", "ab"},                   // C1 CSI (U+009B)
+		{"a\u009bb", "ab"},                   // C1 CSI (U+009B)
 		{"tab\tnewline\n", "tabnewline"},
 		{"", ""},
 	}
