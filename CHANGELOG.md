@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.1]
+
+- Strip control characters from device-provided strings.
+
 ## [0.3.0]
 
 - Dim unusable charger power profiles
