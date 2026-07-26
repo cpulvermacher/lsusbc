@@ -33,7 +33,7 @@ func LoadPorts(sysfsPath string) ([]model.Port, error) {
 
 			port, err := parsePort(portPath)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to parse port %s: %v\n", entry.Name(), err)
+				fmt.Fprintf(os.Stderr, "Warning: failed to parse port %s: %v\n", stripControl(entry.Name()), err)
 				continue
 			}
 			ports = append(ports, *port)
@@ -46,7 +46,7 @@ func LoadPorts(sysfsPath string) ([]model.Port, error) {
 // parsePort parses an individual port directory
 func parsePort(portDir string) (*model.Port, error) {
 	port := &model.Port{
-		Name: filepath.Base(portDir),
+		Name: stripControl(filepath.Base(portDir)),
 	}
 
 	// Parse port files
@@ -86,7 +86,7 @@ func parsePort(portDir string) (*model.Port, error) {
 // parsePartner parses partner information
 func parsePartner(partnerDir string) (*model.Partner, error) {
 	partner := &model.Partner{
-		Name: filepath.Base(partnerDir),
+		Name: stripControl(filepath.Base(partnerDir)),
 	}
 
 	// Parse basic partner info

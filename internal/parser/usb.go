@@ -49,7 +49,7 @@ func LoadStandaloneUSBDevices(sysfsPath string, ports []model.Port) []model.USBD
 			continue
 		}
 		devices = append(devices, model.USBDevice{
-			DeviceID:     name,
+			DeviceID:     stripControl(name),
 			Manufacturer: manufacturer,
 			Product:      product,
 			Serial:       readFile(filepath.Join(path, "serial")),
@@ -100,7 +100,7 @@ func parseUSBDeviceInfo(dir string) []model.USBDevice {
 			continue
 		}
 		devices = append(devices, model.USBDevice{
-			DeviceID:     name,
+			DeviceID:     stripControl(name),
 			Manufacturer: manufacturer,
 			Product:      product,
 			Serial:       readFile(filepath.Join(path, "serial")),

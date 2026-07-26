@@ -41,6 +41,35 @@ func TestReadFile(t *testing.T) {
 	if got := readFile(filepath.Join(dir, "nonexistent")); got != "" {
 		t.Errorf("readFile(nonexistent) = %q, want empty string", got)
 	}
+
+	evilPath := filepath.Join(dir, "evil.txt")
+	if err := os.WriteFile(evilPath, []byte("Widget\x1b]0;PWNED\x07\x1b[31mALERT\x1b[0m"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := readFile(evilPath), "Widget]0;PWNED[31mALERT[0m"; got != want {
+		t.Errorf("readFile(evil) = %q, want %q", got, want)
+	}
+}
+
+func TestStripControl(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"plain ascii", "plain ascii"},
+		{"Naïve Café 日本語", "Naïve Café 日本語"}, // multi-byte UTF-8 preserved
+		{"a\x1bb", "ab"},                     // ESC
+		{"a\x07b", "ab"},                     // BEL
+		{"a\x7fb", "ab"},                     // DEL
+		{"ab", "ab"},                   // C1 CSI (U+009B)
+		{"tab\tnewline\n", "tabnewline"},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		if got := stripControl(tt.input); got != tt.want {
+			t.Errorf("stripControl(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
 }
 
 func TestParseMilliValue(t *testing.T) {
